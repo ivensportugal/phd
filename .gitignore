@@ -1,0 +1,11 @@
+# Ignore the virtual environment
+env/**
+
+# Apple configuration
+.DS_Store
+
+# Ignore results
+originals/**
+originals_all/**
+processed_a/**
+processed_r/**

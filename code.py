@@ -1,86 +1,57 @@
-import math
 import os
+from datetime import datetime
 
-# Constants
-r_e = 0.016
-r_n = 0.030
-
-
-def is_stop(curr_lat, curr_lon, prev_lat, prev_lon):
-
-  if(curr_lat == '' or curr_lon == ''): return False
-  if(prev_lat == '' or prev_lon == ''): return False
-
-  if(math.fabs(curr_lat - prev_lat) <= r_e and
-     math.fabs(curr_lon - prev_lon) <= r_e):
-    return True
-  else:
-    return False
-
-
-
-def is_move(curr_lat, curr_lon, prev_lat, prev_lon):
-
-  if(curr_lat == '' or curr_lon == ''): return False
-  if(prev_lat == '' or prev_lon == ''): return False
-
-  if(math.fabs(curr_lat - prev_lat) > r_e or
-     math.fabs(curr_lon - prev_lon) > r_e):
-    return True
-  else:
-    return False
+from activity import process_activity
+from relation import process_relation
+from relation import INVALID
+from constant import file_suffix
+from constant import original_dir
+from constant import processed_a_dir
+from constant import processed_r_dir
+from constant import processed_prefix
 
 
 
 
 def identify_trajectories():
   files = []
-  for file in os.listdir('./originals/'):
-    if file.endswith('.txt'):
+  for file in os.listdir(original_dir):
+    if file.endswith(file_suffix):
       files.append(file)
   return files
 
 
-def create_processed_dir():
-  processed_dir = './processed/'
-  if not os.path.exists(processed_dir):
-    os.makedirs(processed_dir)
-  return processed_dir
+def create_processed_a_dir():
+  if not os.path.exists(processed_a_dir):
+    os.makedirs(processed_a_dir)
+
+def create_processed_r_dir():
+  if not os.path.exists(processed_r_dir):
+    os.makedirs(processed_r_dir)
 
 
 
-def convert_coordinates(curr_lat, curr_lon, prev_lat, prev_lon):
+def to_minutes(minutes_s):
 
-  return_curr_lat = 0
-  return_curr_lon = 0
-  return_prev_lat = 0
-  return_prev_lon = 0
+  minutes_f = 0
 
-  try: return_curr_lat = float(curr_lat)
-  except ValueError, Argument: return_curr_lat = ''
+  try: minutes_f = float(minutes_s)
+  except ValueError, Argument: minutes_f = ''
 
-  try: return_curr_lon = float(curr_lon)
-  except ValueError, Argument: return_curr_lon = ''
-
-  try: return_prev_lat = float(prev_lat)
-  except ValueError, Argument: return_prev_lat = ''
-
-  try: return_prev_lon = float(prev_lon)
-  except ValueError, Argument: return_prev_lon = ''
-
-  return (return_curr_lat, return_curr_lon, return_prev_lat, return_prev_lon)
+  return minutes_f
 
 
 
 
-def process_trajectories(trajectories, processed_dir):
+
+def process_activities(trajectories):
 
   for trajectory in trajectories:
 
-    original_dir = './originals/'
+    print("Processing " + trajectory)
 
     f_original  = open(original_dir  + trajectory, 'r')
-    f_processed = open(processed_dir + 'p' + trajectory, 'w')
+    f_processed = open(processed_a_dir + processed_prefix + trajectory, 'w')
 
     prev_datapoint = ['','','','']
 
@@ -88,17 +59,16 @@ def process_trajectories(trajectories, processed_dir):
 
       curr_datapoint = line.split(',')
 
-      activity = 'invalid'
+      curr_coord = []
+      prev_coord = []
 
-      curr_lat, curr_lon, prev_lat, prev_lon = convert_coordinates(curr_datapoint[3],
-                                                                   curr_datapoint[2],
-                                                                   prev_datapoint[3],
-                                                                   prev_datapoint[2])
+      curr_coord.insert(0, to_minutes(curr_datapoint[3]))
+      curr_coord.insert(1, to_minutes(curr_datapoint[2]))
+      prev_coord.insert(0, to_minutes(prev_datapoint[3]))
+      prev_coord.insert(1, to_minutes(prev_datapoint[2]))
 
-      if(is_stop(curr_lat, curr_lon, prev_lat, prev_lon)):
-        activity = 'stop'
-      elif(is_move(curr_lat, curr_lon, prev_lat, prev_lon)):
-        activity = 'move'
+      activity = process_activity(curr_coord, prev_coord)
+      
 
       newline = line.replace(line[-2:-1], ',' + activity)
 
@@ -111,6 +81,94 @@ def process_trajectories(trajectories, processed_dir):
 
 
 
-trajectories = identify_trajectories()
-processed_dir = create_processed_dir()
-process_trajectories(trajectories, processed_dir)
+
+
+def process_relations(trajectories):
+
+  for pos_i, traj_i in enumerate(trajectories):
+    for pos_j, traj_j in enumerate(trajectories):
+
+      if(pos_j <= pos_i): continue
+
+      print("Processing " + traj_i + " - " + traj_j)
+
+      f_processed = open(processed_r_dir + processed_prefix + traj_i + "-" + traj_j , 'w')
+
+      f_i = open(processed_a_dir + processed_prefix + traj_i)
+      f_j = open(processed_a_dir + processed_prefix + traj_j)
+
+      line_i = f_i.readline()
+      line_j = f_j.readline()
+
+      # Two indexes: i points to the points of traj_i, and j to points of traj_j
+      # Traverse both trajectories, recording relationships
+
+      while(line_i != '' and line_j != ''):
+
+        datapoint_i = line_i.split(',')
+        datapoint_j = line_j.split(',')
+
+        coord_i = []
+        coord_j = []
+
+        coord_i.insert(0, to_minutes(datapoint_i[3]))
+        coord_i.insert(1, to_minutes(datapoint_i[2]))
+        coord_j.insert(0, to_minutes(datapoint_j[3]))
+        coord_j.insert(1, to_minutes(datapoint_j[2]))
+
+
+        actv_i = datapoint_i[4][0:-1] #removes '/n'
+        actv_j = datapoint_j[4][0:-1] #removes '/n'
+
+
+        relation = process_relation(actv_i, actv_j, coord_i, coord_j)
+
+     
+        timestamp_i = datetime.strptime(datapoint_i[1], '%Y-%m-%d %H:%M:%S')
+        timestamp_j = datetime.strptime(datapoint_j[1], '%Y-%m-%d %H:%M:%S')
+
+
+
+        # Result and Update
+
+        newline = ''
+
+        if(timestamp_i < timestamp_j):
+          newline = traj_i + "-" + traj_j + " - " + datapoint_i[1] + " = " + relation
+          line_i = f_i.readline()
+        elif(timestamp_i > timestamp_j):
+          newline = traj_i + "-" + traj_j + " - " + datapoint_j[1] + " = " + relation
+          line_j = f_j.readline()
+        elif(timestamp_i == timestamp_j):
+          newline = traj_i + "-" + traj_j + " - " + datapoint_i[1] + " = " + relation
+          line_i = f_i.readline()
+          line_j = f_j.readline()
+        else:
+          continue
+
+        f_processed.write(newline)
+      
+
+      relation = INVALID
+      while(line_i != ''):
+        datapoint_i = line_i.split(',')
+        f_processed.write(traj_i + "-" + traj_j + " - " + datapoint_i[1] + " = " + relation)
+        line_i = f_i.readline()
+
+      while(line_j != ''):
+        datapoint_j = line_j.split(',')
+        f_processed.write(traj_i + "-" + traj_j + " - " + datapoint_j[1] + " = " + relation)
+        line_j = f_j.readline()
+
+
+
+def main():
+  trajectories = identify_trajectories()
+  create_processed_a_dir()
+  process_activities(trajectories)
+  create_processed_r_dir()
+  process_relations(trajectories)
+
+
+if __name__ == '__main__':
+  main()
