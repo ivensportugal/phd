@@ -1,10 +1,9 @@
-import math
-
 from constant import *
 
 # Activity Names
 
 INVALID = 'invalid'
+
 STOP    = 'stop'
 MOVE    = 'move'
 

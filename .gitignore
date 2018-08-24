@@ -10,3 +10,6 @@ originals_medium/**
 originals_all/**
 processed_a/**
 processed_r/**
+
+# Ignore Python compiled files
+*.pyc

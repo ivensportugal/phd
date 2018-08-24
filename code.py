@@ -7,8 +7,6 @@ from relation import process_relation
 from relation import INVALID
 from relation import DISJOINT_STOP
 from relation import MEET
-from relation import ONE_WAY_MOVE
-from relation import TWO_WAY_MOVE
 
 from constant import file_suffix
 from constant import original_dir
@@ -121,29 +119,40 @@ def process_relations(trajectories):
       # Two indexes: i points to the points of traj_i, and j to points of traj_j
       # Traverse both trajectories, recording relationships
 
+      prev_datapoint_i = ['','','','','']
+      prev_datapoint_j = ['','','','','']
+
       while(line_i != '' and line_j != ''):
 
-        datapoint_i = line_i.split(',')
-        datapoint_j = line_j.split(',')
+        curr_datapoint_i = line_i.split(',')
+        curr_datapoint_j = line_j.split(',')
 
-        coord_i = []
-        coord_j = []
+        curr_coord_i = []
+        curr_coord_j = []
 
-        coord_i.insert(0, to_minutes(datapoint_i[3]))
-        coord_i.insert(1, to_minutes(datapoint_i[2]))
-        coord_j.insert(0, to_minutes(datapoint_j[3]))
-        coord_j.insert(1, to_minutes(datapoint_j[2]))
+        prev_coord_i = []
+        prev_coord_j = []
+
+        curr_coord_i.insert(0, to_minutes(curr_datapoint_i[3]))
+        curr_coord_i.insert(1, to_minutes(curr_datapoint_i[2]))
+        curr_coord_j.insert(0, to_minutes(curr_datapoint_j[3]))
+        curr_coord_j.insert(1, to_minutes(curr_datapoint_j[2]))
+
+        prev_coord_i.insert(0, to_minutes(prev_datapoint_i[3]))
+        prev_coord_i.insert(1, to_minutes(prev_datapoint_i[2]))
+        prev_coord_j.insert(0, to_minutes(prev_datapoint_j[3]))
+        prev_coord_j.insert(1, to_minutes(prev_datapoint_j[2]))
 
 
-        actv_i = datapoint_i[4][0:-1] #removes '/n'
-        actv_j = datapoint_j[4][0:-1] #removes '/n'
+        actv_i = curr_datapoint_i[4][0:-1] #removes '/n'
+        actv_j = curr_datapoint_j[4][0:-1] #removes '/n'
 
 
-        relation = process_relation(actv_i, actv_j, coord_i, coord_j)
+        relation = process_relation(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_j, prev_coord_j)
 
      
-        timestamp_i = datetime.strptime(datapoint_i[1], '%Y-%m-%d %H:%M:%S')
-        timestamp_j = datetime.strptime(datapoint_j[1], '%Y-%m-%d %H:%M:%S')
+        timestamp_i = datetime.strptime(curr_datapoint_i[1], '%Y-%m-%d %H:%M:%S')
+        timestamp_j = datetime.strptime(curr_datapoint_j[1], '%Y-%m-%d %H:%M:%S')
 
 
 
@@ -152,30 +161,33 @@ def process_relations(trajectories):
         newline = ''
 
         if(timestamp_i < timestamp_j):
-          newline = traj_i + "," + traj_j + "," + datapoint_i[1] + "," + relation + '\n'
+          newline = traj_i + "," + traj_j + "," + curr_datapoint_i[1] + "," + relation + '\n'
           line_i = f_i.readline()
         elif(timestamp_i > timestamp_j):
-          newline = traj_i + "," + traj_j + "," + datapoint_j[1] + "," + relation + '\n'
+          newline = traj_i + "," + traj_j + "," + curr_datapoint_j[1] + "," + relation + '\n'
           line_j = f_j.readline()
         elif(timestamp_i == timestamp_j):
-          newline = traj_i + "," + traj_j + "," + datapoint_i[1] + "," + relation + '\n'
+          newline = traj_i + "," + traj_j + "," + curr_datapoint_i[1] + "," + relation + '\n'
           line_i = f_i.readline()
           line_j = f_j.readline()
         else:
           continue
 
         f_processed.write(newline)
+
+        prev_datapoint_i = curr_datapoint_i
+        prev_datapoint_j = curr_datapoint_j
       
 
       relation = INVALID
       while(line_i != ''):
-        datapoint_i = line_i.split(',')
-        f_processed.write(traj_i + "," + traj_j + "," + datapoint_i[1] + "," + relation + '\n')
+        curr_datapoint_i = line_i.split(',')
+        f_processed.write(traj_i + "," + traj_j + "," + curr_datapoint_i[1] + "," + relation + '\n')
         line_i = f_i.readline()
 
       while(line_j != ''):
-        datapoint_j = line_j.split(',')
-        f_processed.write(traj_i + "," + traj_j + "," + datapoint_j[1] + "," + relation + '\n')
+        curr_datapoint_j = line_j.split(',')
+        f_processed.write(traj_i + "," + traj_j + "," + curr_datapoint_j[1] + "," + relation + '\n')
         line_j = f_j.readline()
 
       f_processed.close()
@@ -237,11 +249,11 @@ def analyze_relations(relations, relation_interest):
 
 
 def main():
-  trajectories = identify_trajectories()
-  create_processed_a_dir()
-  process_activities(trajectories)
-  create_processed_r_dir()
-  process_relations(trajectories)
+  # trajectories = identify_trajectories()
+  # create_processed_a_dir()
+  # process_activities(trajectories)
+  # create_processed_r_dir()
+  # process_relations(trajectories)
   relations = identify_relations()
   analyze_relations(relations, MEET)
 

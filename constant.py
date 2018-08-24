@@ -8,9 +8,9 @@ r_n = 30	# meters
 
 # Clustering
 
-eps = 12000  # (in seconds) The maximum distance between two samples for them
+eps = 100  # (in seconds) The maximum distance between two samples for them
 					 # to be considered as in the same neighborhood.
-min_samples = 2  	# The number of samples (or total weight) in a neighborhood
+min_samples = 40  	# The number of samples (or total weight) in a neighborhood
 									# for a point to be considered as a core point. This includes the point itself.
 
 
