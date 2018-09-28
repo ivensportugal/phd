@@ -2,15 +2,17 @@ import numpy
 import geopy.distance
 
 # Relations
-r_e = 5		# meters
-r_n = 30	# meters
+r_e = 30  # meters
+r_n = 100	# meters
+r_ct = 50  # meters
+r_cl = 200  # meters
 
 
 # Clustering
 
-eps = 100  # (in seconds) The maximum distance between two samples for them
+eps = 6000  # (in seconds) The maximum distance between two samples for them
 					 # to be considered as in the same neighborhood.
-min_samples = 40  	# The number of samples (or total weight) in a neighborhood
+min_samples = 5  	# The number of samples (or total weight) in a neighborhood
 									# for a point to be considered as a core point. This includes the point itself.
 
 

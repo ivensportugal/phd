@@ -11,8 +11,9 @@ class Graph(object):
 			self.adj[i] = []
 
 	def addEdge(self, u, v):
-		self.adj[u].append(v)
-		self.adj[v].append(u)
+		if(v not in self.adj[u]):
+			self.adj[u].append(v)
+			self.adj[v].append(u)
 
   # Breadth First Search
 	def BFS(self, s):
@@ -31,8 +32,8 @@ class Graph(object):
 			s = queue.pop(0)
 			subgraph.append(s)
 
-			for i in self.adj.keys():
-				if((i in self.adj[s]) and (not visited[i])):
+			for i in self.adj[s]:
+				if(not visited[i]):
 					visited[i] = True
 					queue.append(i)
 
@@ -51,6 +52,7 @@ class Graph(object):
 					break
 			if(not contains):
 				subgraphs.append(subgraph)
-				
+
+		print subgraphs
 
 		return subgraphs

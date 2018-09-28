@@ -73,21 +73,21 @@ def is_meet(actv_i, actv_j, coord_i, coord_j):
 
 
 
-def is_one_way_approach(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_j, prev_coord_j):
+def is_one_way_approach(actv_i, actv_j, curr_coord_i, curr_coord_j, prev_coord_i, prev_coord_j):
 	if((actv_i == STOP and actv_j == MOVE) or
 	   (actv_i == MOVE and actv_j == STOP)):
 		if(dist(curr_coord_i, curr_coord_j) < dist(prev_coord_i, prev_coord_j)):
 			return True
 	return False
 
-def is_revolve(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_j, prev_coord_j):
+def is_revolve(actv_i, actv_j, curr_coord_i, curr_coord_j, prev_coord_i, prev_coord_j):
 	if((actv_i == STOP and actv_j == MOVE) or
 	   (actv_i == MOVE and actv_j == STOP)):
 		if(math.fabs(dist(curr_coord_i, curr_coord_j) - dist(prev_coord_i, prev_coord_j)) <= r_e):
 			return True
 	return False
 
-def is_one_way_move_away(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_j, prev_coord_j):
+def is_one_way_move_away(actv_i, actv_j, curr_coord_i, curr_coord_j, prev_coord_i, prev_coord_j):
 	if((actv_i == STOP and actv_j == MOVE) or
 	   (actv_i == MOVE and actv_j == STOP)):
 		if(dist(curr_coord_i, curr_coord_j) > dist(prev_coord_i, prev_coord_j)):
@@ -97,19 +97,19 @@ def is_one_way_move_away(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_
 
 
 
-def is_two_way_approach(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_j, prev_coord_j):
+def is_two_way_approach(actv_i, actv_j, curr_coord_i, curr_coord_j, prev_coord_i, prev_coord_j):
 	if(actv_i == MOVE and actv_j == MOVE):
 		if(dist(curr_coord_i, curr_coord_j) < dist(prev_coord_i, prev_coord_j)):
 			return True
 	return False
 
-def is_parallel(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_j, prev_coord_j):
+def is_parallel(actv_i, actv_j, curr_coord_i, curr_coord_j, prev_coord_i, prev_coord_j):
 	if(actv_i == MOVE and actv_j == MOVE):
 		if(math.fabs(dist(curr_coord_i, curr_coord_j) == dist(prev_coord_i, prev_coord_j)) <= r_e):
 			return True
 	return False
 
-def is_two_way_move_away(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_j, prev_coord_j):
+def is_two_way_move_away(actv_i, actv_j, curr_coord_i, curr_coord_j, prev_coord_i, prev_coord_j):
 	if(actv_i == MOVE and actv_j == MOVE):
 		if(dist(curr_coord_i, curr_coord_j) > dist(prev_coord_i, prev_coord_j)):
 			return True

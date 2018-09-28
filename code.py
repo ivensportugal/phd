@@ -80,9 +80,8 @@ def process_activities(trajectories):
       prev_coord.insert(1, to_minutes(prev_datapoint[2]))
 
       activity = process_activity(curr_coord, prev_coord)
-      
 
-      newline = line.replace(line[-2:-1], ',' + activity)
+      newline = line.strip() + ',' + activity + '\n'
 
       f_processed.write(newline)
 
@@ -144,7 +143,7 @@ def process_relations(trajectories):
         actv_j = curr_datapoint_j[4][0:-1] #removes '/n'
 
 
-        relation = process_relation(actv_i, actv_j, curr_coord_i, prev_coord_i, curr_coord_j, prev_coord_j)
+        relation = process_relation(actv_i, actv_j, curr_coord_i, curr_coord_j, prev_coord_i, prev_coord_j)
 
      
         timestamp_i = datetime.strptime(curr_datapoint_i[1], '%Y-%m-%d %H:%M:%S')
@@ -194,13 +193,13 @@ def process_relations(trajectories):
 
 
 def main():
-  #trajectories = identify_trajectories()
-  #create_processed_a_dir()
-  #process_activities(trajectories)
-  #create_processed_r_dir()
-  #process_relations(trajectories)
+  trajectories = identify_trajectories()
+  # create_processed_a_dir()
+  # process_activities(trajectories)
+  # create_processed_r_dir()
+  # process_relations(trajectories)
   relations = identify_relations()
-  analyze_relations(relations)
+  analyze_relations(relations, trajectories)
 
 
 if __name__ == '__main__':
