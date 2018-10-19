@@ -5,6 +5,7 @@ large_original_dir  = './originals_all/'
 
 original_dir     = small_original_dir
 preprocessed_dir = 'preprocessed/'
+lifecycle_dir    = 'lifecycle/'
 
 file_suffix = '.txt'
 

@@ -76,8 +76,8 @@ def process():
 		last_column = datapoints_valid.shape[datapoints_valid.ndim-1]-1
 		clusters_curr_timestamp = np.insert(datapoints_valid, last_column+1, dbscan(datapoints_valid[:,2,4]).labels_, axis=1)
 
-		response = calc_relations(clusters_curr_timestamp, clusters_prev_timestamp)
-		response = save_relations(response)
+		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
+		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timestamp-datetime(minutes=rate), timeline)
 
 
 
