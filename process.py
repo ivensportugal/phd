@@ -15,7 +15,7 @@ def preprocess():
 	trajectories = identify_trajectories(original_dir)
 	for trajectory in trajectories:
 
-		f_original  = open(original_dir     + trajectory, 'r')
+		f_original     = open(original_dir     + trajectory, 'r')
 		f_preprocessed = open(preprocessed_dir + trajectory, 'w')
 
 		for line in f_original:

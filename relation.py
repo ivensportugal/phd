@@ -109,4 +109,11 @@ def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, pre
 
 
 
+def save_start(old_id, new_id, timestamp, clusters):
+	f = open(lifecycle_dir + new_id + file_suffix, 'w')
+	s = ''
+	for cluster in clusters:
+		s += cluster + ', '
+	f.write(timestamp + ': ' + new_id + START_TXT + '(' + s + ').')
+
 
