@@ -8,6 +8,7 @@ env/**
 originals/**
 originals_medium/**
 originals_all/**
+originals_test/**
 processed_a/**
 processed_r/**
 preprocessed/**

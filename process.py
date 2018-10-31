@@ -4,7 +4,14 @@ from datetime import timedelta
 from constant import original_dir
 from constant import preprocessed_dir
 from constant import rate
-from io import identify_trajectories
+from file import identify_trajectories
+
+from cluster import dbscan
+
+from relation import calc_relations
+from relation import save_relations
+
+import numpy as np
 
 
 ## Pre process files.
@@ -44,15 +51,15 @@ def process():
 		f_preprocessed.append(open(preprocessed_dir + trajectory, 'r'))
 
 
-	timeline = None
-	timeline_rate = datapoint
-	has_trajectory = true
+	timeline = None # The universtal timeline
+	timeline_rate = rate
+	has_trajectory = True
 
-	clusters_curr_timestamp = []
-	clusters_prev_timestamp = []
+	clusters_curr_timestamp = np.array([])
+	clusters_prev_timestamp = np.array([])
 
 	while(has_trajectory):
-		has_trajectory = false
+		has_trajectory = False
 
 		# Read all trajectories
 		lines = [trajectory.readline() for trajectory in f_preprocessed]
@@ -62,22 +69,22 @@ def process():
 
 		# Process each line, so its possible to access data
 		datapoints = [line.split(',') for line in lines]
-		timestamps = [datetime.strptime(datapoint[1], '%d %H:%M') if datapoint != '' else datetime.max for datapoint in datapoints]
+		timestamps = [datetime.strptime(datapoint[1], '%d %H:%M') if datapoint != [''] else datetime.max for datapoint in datapoints]
 
 		# Start timeline if needed
-		if not timeline;
+		if not timeline:
 			timeline = min(timestamps)
 
 		# Performs one hop, so valid data points are less than timeline
-		timeline = timeline + datetime(minutes=rate)
+		timeline = timeline + timedelta(minutes=rate)
 
 		# Performs DBSCAN only on those points that are valid (less than universal timestamp)
-		datapoints_valid = np.array([[datapoints[i][0], datapoints[i][2], datapoints[i][3]] if (timeline - timestamp).total_seconds() >= 0 for i, timestamp in enumerate(timestamps)])
+		datapoints_valid = np.array([[datapoints[i][0], datapoints[i][2], datapoints[i][3]] for i, timestamp in enumerate(timestamps) if (timeline - timestamp).total_seconds() >= 0])
 		last_column = datapoints_valid.shape[datapoints_valid.ndim-1]-1
-		clusters_curr_timestamp = np.insert(datapoints_valid, last_column+1, dbscan(datapoints_valid[:,2,4]).labels_, axis=1)
+		clusters_curr_timestamp = np.insert(datapoints_valid, last_column+1, dbscan(datapoints_valid[:,1:3]).labels_, axis=1)
 
 		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
-		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timestamp-datetime(minutes=rate), timeline)
+		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timestamp-timedelta(minutes=rate), timeline)
 
 
 

@@ -1,9 +1,17 @@
+#####
+#
+# TODO: DIVIDE THIS INTO CONSTANTS AND CONFIGURATIONS
+#
+#####
+
+
 # Files
 small_original_dir  = './originals/'
 medium_original_dir = './originals_medium/'
 large_original_dir  = './originals_all/'
+test_original_dir   = './originals_test/'
 
-original_dir     = small_original_dir
+original_dir     = test_original_dir
 preprocessed_dir = 'preprocessed/'
 lifecycle_dir    = 'lifecycle/'
 
@@ -19,7 +27,7 @@ min_shared  = 0.8
 rate = 10 #minutes
 
 
-# Cluster
+'''Cluster'''
 cluster_id_counter = 0
 
 
