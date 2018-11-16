@@ -50,49 +50,80 @@ def process():
 	for trajectory in trajectories:
 		f_preprocessed.append(open(preprocessed_dir + trajectory, 'r'))
 
+	datapoints = [trajectory.readline().split(',') for trajectory in f_preprocessed] # starting datapoints, assumes files contain data
+	timestamps = [datetime.strptime(datapoint[1], '%d %H:%M') for datapoint in datapoints] # the first timestamp of every file, assumes files contain data
 
-	timeline = None # The universtal timeline
-	timeline_rate = rate
-	has_trajectory = True
+	timeline = min(timestamps) # The universal timeline
+	timeline_rate = timedelta(minutes=rate)
+
 
 	clusters_curr_timestamp = np.array([])
 	clusters_prev_timestamp = np.array([])
 
-	while(has_trajectory):
-		has_trajectory = False
+	while(True):
 
-		# Read all trajectories
-		lines = [trajectory.readline() for trajectory in f_preprocessed]
+		datapoints = [calculate_next_datapoint(trajectory, timeline, timeline_rate, datapoints[i]) for i, trajectory in enumerate(f_preprocessed)]
+		timestamps = [datetime.strptime(datapoint[1], '%d %H:%M') if datapoint != None else None for datapoint in datapoints]
+		
 
 		# Stop Condition: If all files have been read, stop
-		if all(line == '' for line in lines): break
+		if all(datapoint == None for datapoint in datapoints): break
 
-		# Process each line, so its possible to access data
-		datapoints = [line.split(',') for line in lines]
-		timestamps = [datetime.strptime(datapoint[1], '%d %H:%M') if datapoint != [''] else datetime.max for datapoint in datapoints]
-
-		# Start timeline if needed
-		if not timeline:
-			timeline = min(timestamps)
-
-		# Performs one hop, so valid data points are less than timeline
-		timeline = timeline + timedelta(minutes=rate)
 
 		# Performs DBSCAN only on those points that are valid (less than universal timestamp)
-		datapoints_valid = np.array([[datapoints[i][0], datapoints[i][2], datapoints[i][3]] for i, timestamp in enumerate(timestamps) if (timeline - timestamp).total_seconds() >= 0])
-		last_column = datapoints_valid.shape[datapoints_valid.ndim-1]-1
-		clusters_curr_timestamp = np.insert(datapoints_valid, last_column+1, dbscan(datapoints_valid[:,1:3]).labels_, axis=1)
+		datapoints_valid = np.array([[datapoints[i][0], datapoints[i][2], datapoints[i][3]] for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp])
+		clusters_curr_timestamp = np.c_[datapoints_valid, dbscan(datapoints_valid[:,1:3].astype(np.float64)).labels_] # np.float64 required to avoid warning
+
 
 		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
-		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timestamp-timedelta(minutes=rate), timeline)
+		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
 
 
-
-		has_trajectory = any(datapoint != '' for datapoint in datapoints)
+		# Updates for next iteration: timeline and cluster list
+		timeline = timeline + timeline_rate
+		# TODO: update clusters_prev_timestamp = clusters_curr_timestamp
 
 
 	for file in f_preprocessed:
 		file.close()
+
+
+
+# A helper function in process()
+# Given a trajectory (file), find the timestamp (line) just before the universal timeline
+# A trajectory and a datapoint have to be passed because, in some cases, the algorithm needs to give one step back
+def calculate_next_datapoint(traj, tl, tl_rate, prev_datapoint):
+
+
+	# Already reached EOF
+	if prev_datapoint is None: return None
+
+	# Checks if needs to update
+	if datetime.strptime(prev_datapoint[1], '%d %H:%M') >= tl: return prev_datapoint
+
+	# Tries to update
+	pos = traj.tell()
+	curr_datapoint = prev_datapoint
+
+	# Timeline is always set, use it
+	while True:
+		line = traj.readline()
+		if line == '': break # EOF
+		if datetime.strptime(line.split(',')[1], '%d %H:%M') > tl:
+			traj.seek(pos)
+			return curr_datapoint
+		pos = traj.tell()
+		curr_datapoint = line.split(',')
+
+	# If the timestamp I have is old, then do not use it. It has been processed already
+	if (tl - datetime.strptime(curr_datapoint[1], '%d %H:%M')) >= tl_rate:
+		return None
+	else:
+		return curr_datapoint
+
+
+
+
 
 
 

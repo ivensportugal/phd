@@ -24,7 +24,7 @@ min_shared  = 0.8
 
 
 # Process
-rate = 10 #minutes
+rate = 1 # minutes
 
 
 '''Cluster'''
@@ -32,7 +32,7 @@ cluster_id_counter = 0
 
 
 # DBSCAN
-eps = 6000  # (in seconds) The maximum distance between two samples for them
+eps = 200  # (in meters) The maximum distance between two samples for them
 					  # to be considered as in the same neighborhood.
-min_samples = min_shared  # The number of samples (or total weight) in a neighborhood
-													# for a point to be considered as a core point. This includes the point itself.
+min_samples = min_cluster  # The number of samples (or total weight) in a neighborhood
+													 # for a point to be considered as a core point. This includes the point itself.
