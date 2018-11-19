@@ -57,15 +57,20 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 	#  IF PREV_TIMESTAMP IS EMPTY -> START RELATION ON CURR-TIMESTAMP
 	########
 
+	print('enter calc_relations')
+	print(clusters_prev_timestamp)
+	print(clusters_curr_timestamp)
+
 
 	# Associates trajectories to clusters, and organize by cluster, on previous timestamp
 	# Note the 'traj' at the dictionary name
 	n_clusters_prev_timestamp = 0
 	if len(clusters_prev_timestamp) > 0:
-		n_clusters_prev_timestamp = np.unique(clusters_prev_timestamp[:,-1:]).size - (1 if -1 in clusters_prev_timestamp[:,-1:] else 0)
+		n_clusters_prev_timestamp = np.unique(clusters_prev_timestamp[:,-1:].astype(np.float64)).size - (1 if -1 in clusters_prev_timestamp[:,-1:].astype(np.float64) else 0)
 	dict_traj_prev_timestamp = {k: [] for k in range(n_clusters_prev_timestamp)}
-	for traj in clusters_prev_timestamp:
-		dict_traj_prev_timestamp[int(traj[-1])].append(traj[0]) # appends id to the entry of a specific cluster in the dictionary
+	if n_clusters_prev_timestamp > 0: # accounts for the timestamp in which all trajectories do not belong to any cluster
+		for traj in clusters_prev_timestamp:
+			dict_traj_prev_timestamp[int(traj[-1])].append(traj[0]) # appends id to the entry of a specific cluster in the dictionary
 
 	# Associates trajectories to clusters, and organize by cluster, on current timestamp
 	# Note the 'traj' at the dictionary name
@@ -73,8 +78,9 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 	if len(clusters_curr_timestamp) > 0:
 	  n_clusters_curr_timestamp = np.unique(clusters_curr_timestamp[:,-1:].astype(np.float64)).size - (1 if -1 in clusters_curr_timestamp[:,-1:].astype(np.float64) else 0) # np.float64 required to avoid warning
 	dict_traj_curr_timestamp = {k: [] for k in range(n_clusters_curr_timestamp)}
-	for traj in clusters_curr_timestamp:
-		dict_traj_curr_timestamp[int(traj[-1])].append(traj[0]) # appends id to the entry of a specific cluster in the dictionary
+	if n_clusters_curr_timestamp > 0: # accounts for the timestamp in which all trajectories do not belong to any cluster
+		for traj in clusters_curr_timestamp:
+			dict_traj_curr_timestamp[int(traj[-1])].append(traj[0]) # appends id to the entry of a specific cluster in the dictionary
 
 
 	# Create dictionary of clusters x clusters for previous and current timestamps
@@ -92,8 +98,8 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 		for cluster_curr in dict_traj_curr_timestamp:
 
-			# Intersection of sets using '&'
-			common_traj = dict_traj_prev_timestamp[cluster_prev] & dict_traj_curr_timestamp[cluster_curr]
+			# Intersection of lists
+			common_traj = [traj for traj in dict_traj_prev_timestamp[cluster_prev] if traj in dict_traj_curr_timestamp[cluster_curr]]
 
 			# Eliminates trajectories we know went to another cluster
 			individual_traj_leave = np.setdiff1d(individual_traj_leave, common_traj)
@@ -120,8 +126,10 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 	# Testing
 
+	print('before returning')
 	print(dict_cluster_prev_timestamp)
 	print(dict_cluster_curr_timestamp)
+	print('========================')
 	a = raw_input()
 
 

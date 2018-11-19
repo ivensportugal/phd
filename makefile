@@ -1,3 +1,3 @@
 clean:
-	rm ./preprocessed/*
-	rm ./lifecycle/*
+	rm -f ./preprocessed/*
+	rm -f ./lifecycle/*

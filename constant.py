@@ -19,7 +19,7 @@ file_suffix = '.txt'
 
 
 # Parameters
-min_cluster = 3
+min_cluster = 2
 min_shared  = 0.8
 
 

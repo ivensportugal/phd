@@ -30,7 +30,7 @@ def preprocess():
 			datapoint = line.split(',')
 			_id        = datapoint[0]
 			_timestamp = datetime.strptime(datapoint[1], '%Y-%m-%d %H:%M:%S')
-			_lat       = datapoint[3][0:-2]
+			_lat       = datapoint[3][0:-1] if '\n' in datapoint[3] else datapoint[3]  # removes '\n'
 			_lon       = datapoint[2]
 
 			newline = _id + ',' + _timestamp.strftime('%d %H:%M') + ',' + _lat + ',' + _lon + '\n'
@@ -76,12 +76,12 @@ def process():
 
 
 		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
-		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
+		#save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
 
 
 		# Updates for next iteration: timeline and cluster list
 		timeline = timeline + timeline_rate
-		# TODO: update clusters_prev_timestamp = clusters_curr_timestamp
+		clusters_prev_timestamp = clusters_curr_timestamp
 
 
 	for file in f_preprocessed:
