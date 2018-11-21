@@ -79,9 +79,9 @@ def process():
 		#save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
 
 
-		# Updates for next iteration: timeline and cluster list
+		# Updates for next iteration: timeline, and cluster list
 		timeline = timeline + timeline_rate
-		clusters_prev_timestamp = clusters_curr_timestamp
+		clusters_prev_timestamp = np.copy(clusters_curr_timestamp)
 
 
 	for file in f_preprocessed:

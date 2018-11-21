@@ -31,7 +31,7 @@ START_TXT = 'starts'
 def is_same(c1, c2):
 	n_c1 = float(len(c1))
 	n_c2 = float(len(c2))
-	n_intersect = float(len(c1 & c2))
+	n_intersect = float(len([traj for traj in c1 if traj in c2]))
 
 	if n_intersect / n_c1 >= min_shared and n_intersect / n_c2 >= min_shared:
 		return True
@@ -83,6 +83,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 			dict_traj_curr_timestamp[int(traj[-1])].append(traj[0]) # appends id to the entry of a specific cluster in the dictionary
 
 
+
 	# Create dictionary of clusters x clusters for previous and current timestamps
 	# Note the 'cluster' at the dictionary name
 	dict_cluster_prev_timestamp = {k: [] for k in range(n_clusters_prev_timestamp)}
@@ -90,11 +91,11 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 	# Populate dictionaries with their relations with other clusters
 
-	individual_traj_enter = dict_traj_curr_timestamp
+	individual_traj_enter = dict_traj_curr_timestamp.copy()
 
 	for cluster_prev in dict_traj_prev_timestamp:
 
-		individual_traj_leave = dict_traj_prev_timestamp[cluster_prev]
+		individual_traj_leave = list(dict_traj_prev_timestamp[cluster_prev])
 
 		for cluster_curr in dict_traj_curr_timestamp:
 
@@ -124,12 +125,33 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
+	# At this point, potential cluster or trajectory enters and leaves are marked.
+	# Further analysis will associate same clusers in different timestamps and mark trajectories that continued in the cluser.
+
+	dict_cross_cluster = {}
+	print('dict_traj_prev_timestamp')
+	print(dict_traj_prev_timestamp)
+	print('dict_traj_curr_timestamp')
+	print(dict_traj_curr_timestamp)
+
+	for cluster_prev in dict_traj_prev_timestamp:
+		for cluster_curr in dict_traj_curr_timestamp:
+			if is_same(dict_traj_prev_timestamp[cluster_prev], dict_traj_curr_timestamp[cluster_curr]):
+				if cluster_prev in dict_cross_cluster.keys():
+					raise ValueError('Cluster ' + str(cluster_prev) + ' already exists in the dictionary, and therefore has already been associated with another cluster.')
+				else:
+					dict_cross_cluster[cluster_prev] = cluster_curr
+
+
+
 	# Testing
 
 	print('before returning')
 	print(dict_cluster_prev_timestamp)
 	print(dict_cluster_curr_timestamp)
+	print(dict_cross_cluster)
 	print('========================')
+
 	a = raw_input()
 
 
