@@ -29,6 +29,7 @@ rate = 1 # minutes
 
 '''Cluster'''
 cluster_id_counter = 0
+NO_CLUSTER = -1
 
 
 # DBSCAN

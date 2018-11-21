@@ -69,7 +69,6 @@ def process():
 		# Stop Condition: If all files have been read, stop
 		if all(datapoint == None for datapoint in datapoints): break
 
-
 		# Performs DBSCAN only on those points that are valid (less than universal timestamp)
 		datapoints_valid = np.array([[datapoints[i][0], datapoints[i][2], datapoints[i][3]] for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp])
 		clusters_curr_timestamp = np.c_[datapoints_valid, dbscan(datapoints_valid[:,1:3].astype(np.float64)).labels_] # np.float64 required to avoid warning
