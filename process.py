@@ -74,7 +74,16 @@ def process():
 		clusters_curr_timestamp = np.c_[datapoints_valid, dbscan(datapoints_valid[:,1:3].astype(np.float64)).labels_] # np.float64 required to avoid warning
 
 
+		# Calculate Relations
 		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
+
+		# Calculate Similarity across timestamps
+		dict_cross_cluster = calculate_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
+
+		# Assign universal cluster ids and update cluster ids
+		calculate_cluster_id()
+
+		# Save Relations
 		#save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
 
 

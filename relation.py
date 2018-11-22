@@ -131,47 +131,63 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 			dict_cluster_curr_timestamp[cluster_curr].append([traj, T_ENTER])
 
 
-
 	# At this point, potential cluster or trajectory enters and leaves are marked.
 	# Further analysis will associate same clusers in different timestamps and mark trajectories that continued in the cluster.
 
-	dict_cross_cluster = {}
+	return dict_cluster_prev_timestamp, dict_cluster_curr_timestamp
+
+
+
+
+
+def calculate_similarity(dict_traj_prev_timestamp, dict_traj_curr_timestamp):
+
+
+	cluster_list_prev = []
+	if len(clusters_prev_timestamp) > 0:
+		cluster_list_prev = np.unique(clusters_prev_timestamp[:,-1:]).astype(np.int32) # np.int32 required to avoid warning
+		cluster_list_prev = np.delete(cluster_list_prev, np.where(cluster_list_prev == NO_CLUSTER)) # removes -1 (NO_CLUSTER)
+
+	cluster_list_curr = []
+	if len(clusters_curr_timestamp) > 0:
+		cluster_list_curr = np.unique(clusters_curr_timestamp[:,-1:]).astype(np.int32) # np.int32 required to avoid warning
+		cluster_list_curr = np.delete(cluster_list_curr, np.where(cluster_list_curr == NO_CLUSTER)) # removes -1 (NO_CLUSTER)
+
+
+
+	dict_cross_cluster = {} # keys: current ids / values: previous ids -- useful when updating current ids later on
 	print('dict_traj_prev_timestamp')
 	print(dict_traj_prev_timestamp)
 	print('dict_traj_curr_timestamp')
 	print(dict_traj_curr_timestamp)
 
-	for cluster_prev in dict_traj_prev_timestamp:
-		for cluster_curr in dict_traj_curr_timestamp:
+	for cluster_curr in dict_traj_curr_timestamp:
+		for cluster_prev in dict_traj_prev_timestamp:
 			if is_same(dict_traj_prev_timestamp[cluster_prev], dict_traj_curr_timestamp[cluster_curr]):
-				if cluster_prev in dict_cross_cluster.keys():
-					raise ValueError('Cluster ' + str(cluster_prev) + ' already exists in the dictionary, and therefore has already been associated with another cluster.')
+				if cluster_curr in dict_cross_cluster.keys():
+					raise ValueError('Cluster ' + str(cluster_curr) + ' already exists in the dictionary, and therefore has already been associated with another cluster.')
 				else:
-					dict_cross_cluster[cluster_prev] = cluster_curr
+					dict_cross_cluster[cluster_curr] = cluster_prev
 
-
-
-	# Testing
-
-	print('before returning')
-	print(dict_cluster_prev_timestamp)
-	print(dict_cluster_curr_timestamp)
+	print('dict_cross_cluster')
 	print(dict_cross_cluster)
-	print('========================')
-
-	a = raw_input()
 
 
+	return dict_cross_cluster
 
-	# # Process clusters in the previous timestamp (i.e. looking for leave relationships)
-	# for cluster_prev in dict_cluster_prev_timestamp:
-	# 	dict_cluster_prev_timestamp[cluster_prev] = [[cluster[0], SAME] if is_same(dict_traj_prev_timestamp[cluster_prev], dict_traj_curr_timestamp[cluster]) else [cluster[0], LEAVE] for cluster in dict_cluster_prev_timestamp[cluster_prev]]
+	
 
-	# # Process clusters in the current timestamp (i.e. looking for enter relationships)
-	# for cluster_curr in dict_cluster_curr_timestamp:
-	# 	dict_cluster_curr_timestamp[cluster_curr] = [[cluster[0], SAME] if is_same(dict_traj_curr_timestamp[cluster_prev], dict_traj_prev_timestamp[cluster]) else [cluster[0], ENTER] for cluster in dict_cluster_curr_timestamp[cluster_curr]]
 
-	return dict_cluster_prev_timestamp, dict_cluster_curr_timestamp
+def calculate_cluster_id():
+
+	# Updates clusters_curr_timestamp with universal cluster ids.
+	for cluster_id in cluster_list_curr:
+		if cluster_id in dict_cross_cluster.keys():
+			print(cluster_id)
+			print(clusters_curr_timestamp)
+			np.where(clusters_curr_timestamp[0] == cluster_id)
+			print(np.where(clusters_curr_timestamp == cluster_id))
+			#clusters_curr_timestamp[np.where(clusters_curr_timestamp == cluster_id)] = dict_cross_cluster[cluster_id]
 
 
 def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, prev_timestamp, curr_timestamp):
