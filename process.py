@@ -9,6 +9,8 @@ from file import identify_trajectories
 from cluster import dbscan
 
 from relation import calc_relations
+from relation import calc_similarity
+from relation import calc_cluster_id
 from relation import save_relations
 
 import numpy as np
@@ -72,16 +74,17 @@ def process():
 		# Performs DBSCAN only on those points that are valid (less than universal timestamp)
 		datapoints_valid = np.array([[datapoints[i][0], datapoints[i][2], datapoints[i][3]] for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp])
 		clusters_curr_timestamp = np.c_[datapoints_valid, dbscan(datapoints_valid[:,1:3].astype(np.float64)).labels_] # np.float64 required to avoid warning
+		clusters_curr_timestamp[:,-1] = (clusters_curr_timestamp[:,-1].astype(int)*-1-1).astype(str)  # so traj without clusters have cluster id zero
 
 
 		# Calculate Relations
 		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
 
 		# Calculate Similarity across timestamps
-		dict_cross_cluster = calculate_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
+		dict_cross_cluster = calc_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
 
 		# Assign universal cluster ids and update cluster ids
-		calculate_cluster_id()
+		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, dict_cross_cluster)
 
 		# Save Relations
 		#save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)

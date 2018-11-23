@@ -54,14 +54,6 @@ def save_start(old_id, new_id, timestamp, clusters):
 
 def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
-	########
-	#  IF PREV_TIMESTAMP IS EMPTY -> START RELATION ON CURR-TIMESTAMP
-	########
-
-	print('enter calc_relations')
-	print(clusters_prev_timestamp)
-	print(clusters_curr_timestamp)
-
 
 	# Associates trajectories to clusters, and organize by cluster, on previous timestamp
 	# Note the 'traj' at the dictionary name
@@ -69,7 +61,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 	cluster_list_prev = []
 	if len(clusters_prev_timestamp) > 0:
 		cluster_list_prev = np.unique(clusters_prev_timestamp[:,-1:]).astype(np.int32) # np.int32 required to avoid warning
-		cluster_list_prev = np.delete(cluster_list_prev, np.where(cluster_list_prev == NO_CLUSTER)) # removes -1 (NO_CLUSTER)
+		cluster_list_prev = np.delete(cluster_list_prev, np.where(cluster_list_prev == NO_CLUSTER)) # removes (NO_CLUSTER)
 		n_clusters_prev_timestamp = cluster_list_prev.size
 	dict_traj_prev_timestamp = {k: [] for k in cluster_list_prev} 
 	if n_clusters_prev_timestamp > 0: # accounts for the timestamp in which all trajectories do not belong to any cluster
@@ -82,7 +74,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 	cluster_list_curr = []
 	if len(clusters_curr_timestamp) > 0:
 		cluster_list_curr = np.unique(clusters_curr_timestamp[:,-1:]).astype(np.int32) # np.int32 required to avoid warning
-		cluster_list_curr = np.delete(cluster_list_curr, np.where(cluster_list_curr == NO_CLUSTER)) # removes -1 (NO_CLUSTER)
+		cluster_list_curr = np.delete(cluster_list_curr, np.where(cluster_list_curr == NO_CLUSTER)) # removes (NO_CLUSTER)
 		n_clusters_curr_timestamp = cluster_list_curr.size
 	dict_traj_curr_timestamp = {k: [] for k in cluster_list_curr} 
 	if n_clusters_curr_timestamp > 0: # accounts for the timestamp in which all trajectories do not belong to any cluster
@@ -140,26 +132,22 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
-def calculate_similarity(dict_traj_prev_timestamp, dict_traj_curr_timestamp):
+def calc_similarity(dict_traj_prev_timestamp, dict_traj_curr_timestamp):
 
 
-	cluster_list_prev = []
-	if len(clusters_prev_timestamp) > 0:
-		cluster_list_prev = np.unique(clusters_prev_timestamp[:,-1:]).astype(np.int32) # np.int32 required to avoid warning
-		cluster_list_prev = np.delete(cluster_list_prev, np.where(cluster_list_prev == NO_CLUSTER)) # removes -1 (NO_CLUSTER)
+	# cluster_list_prev = []
+	# if len(clusters_prev_timestamp) > 0:
+	# 	cluster_list_prev = np.unique(clusters_prev_timestamp[:,-1:]).astype(np.int32) # np.int32 required to avoid warning
+	# 	cluster_list_prev = np.delete(cluster_list_prev, np.where(cluster_list_prev == NO_CLUSTER)) # removes (NO_CLUSTER)
 
-	cluster_list_curr = []
-	if len(clusters_curr_timestamp) > 0:
-		cluster_list_curr = np.unique(clusters_curr_timestamp[:,-1:]).astype(np.int32) # np.int32 required to avoid warning
-		cluster_list_curr = np.delete(cluster_list_curr, np.where(cluster_list_curr == NO_CLUSTER)) # removes -1 (NO_CLUSTER)
+	# cluster_list_curr = []
+	# if len(clusters_curr_timestamp) > 0:
+	# 	cluster_list_curr = np.unique(clusters_curr_timestamp[:,-1:]).astype(np.int32) # np.int32 required to avoid warning
+	# 	cluster_list_curr = np.delete(cluster_list_curr, np.where(cluster_list_curr == NO_CLUSTER)) # removes (NO_CLUSTER)
 
 
 
 	dict_cross_cluster = {} # keys: current ids / values: previous ids -- useful when updating current ids later on
-	print('dict_traj_prev_timestamp')
-	print(dict_traj_prev_timestamp)
-	print('dict_traj_curr_timestamp')
-	print(dict_traj_curr_timestamp)
 
 	for cluster_curr in dict_traj_curr_timestamp:
 		for cluster_prev in dict_traj_prev_timestamp:
@@ -169,25 +157,57 @@ def calculate_similarity(dict_traj_prev_timestamp, dict_traj_curr_timestamp):
 				else:
 					dict_cross_cluster[cluster_curr] = cluster_prev
 
-	print('dict_cross_cluster')
-	print(dict_cross_cluster)
-
 
 	return dict_cross_cluster
 
 	
 
 
-def calculate_cluster_id():
+def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, dict_cross_cluster):
+
+
+	# Checks the cross matrix to identify current clusters that did not exist in the past
+	internal_cluster_ids = [cluster_id for cluster_id in dict_clusters_curr_timestamp.keys() if cluster_id not in dict_cross_cluster]
+	print('new_cluster_ids')
+	print(internal_cluster_ids)
+
+
+	# Assign a new universal cluster id to these clusters
+	# Negative cluster ids are internal, positive cluster ids are universal
+	dict_internal_universal_cluster_ids = {}
+	for internal_cluster_id in internal_cluster_ids:
+		dict_internal_universal_cluster_ids[internal_cluster_id] = constant.cluster_id_counter
+		constant.cluster_id_counter += 1
+
+
+	# Conversion table ready.
+	# Update values on lists and dictionaries.
+	print('dict_internal_universal_cluster_ids')
+	print(dict_internal_universal_cluster_ids)
+
+
+	###################################################################################################################
+	# Message to myself
+	# Should update other variables
+	# Note that you changed how cluster ids work
+	# Cluster ids returned by DBSCAN (called internal) start in zero (NO CLUSTER) and are *** NEGATIVE ***
+	# Universal cluster ids (those that you will save in files) are positive
+	# You are buliding a conversion dictionary
+	# For some reason, some of these ids are in string format. Double-check if they are ints... if needed.
+	# I tried to fix that, but I think that a past me decided to keep it text for some reason... :/
+	#################################################################################################################
+
+
+
 
 	# Updates clusters_curr_timestamp with universal cluster ids.
-	for cluster_id in cluster_list_curr:
-		if cluster_id in dict_cross_cluster.keys():
-			print(cluster_id)
-			print(clusters_curr_timestamp)
-			np.where(clusters_curr_timestamp[0] == cluster_id)
-			print(np.where(clusters_curr_timestamp == cluster_id))
-			#clusters_curr_timestamp[np.where(clusters_curr_timestamp == cluster_id)] = dict_cross_cluster[cluster_id]
+	# for cluster_id in cluster_list_curr:
+	# 	if cluster_id in dict_cross_cluster.keys():
+	# 		print(cluster_id)
+	# 		print(clusters_curr_timestamp)
+	# 		np.where(clusters_curr_timestamp[0] == cluster_id)
+	# 		print(np.where(clusters_curr_timestamp == cluster_id))
+	# 		#clusters_curr_timestamp[np.where(clusters_curr_timestamp == cluster_id)] = dict_cross_cluster[cluster_id]
 
 
 def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, prev_timestamp, curr_timestamp):
