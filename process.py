@@ -9,7 +9,6 @@ from file import identify_trajectories
 from cluster import dbscan
 
 from relation import calc_relations
-from relation import calc_similarity
 from relation import calc_cluster_id
 from relation import save_relations
 
@@ -78,10 +77,16 @@ def process():
 
 
 		# Calculate Relations
-		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
+		dict_cluster_prev_timestamp, dict_cluster_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
 
-		# Calculate Similarity across timestamps
-		dict_cross_cluster = calc_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
+		print('---------------------------------------------')
+		print('dict_cluster_prev_timestamp')
+		print(dict_cluster_prev_timestamp)
+		print('dict_cluster_curr_timestamp')
+		print(dict_cluster_curr_timestamp)
+
+		# # Calculate Similarity across timestamps
+		# dict_cross_cluster = calc_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
 
 		# Assign universal cluster ids and update cluster ids
 		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, dict_cross_cluster)
