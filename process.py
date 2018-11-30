@@ -13,6 +13,7 @@ from relation import calc_cluster_id
 from relation import save_relations
 
 import numpy as np
+from numpy.lib.recfunctions import append_fields
 
 
 ## Pre process files.
@@ -51,45 +52,42 @@ def process():
 	for trajectory in trajectories:
 		f_preprocessed.append(open(preprocessed_dir + trajectory, 'r'))
 
-	datapoints = [trajectory.readline().split(',') for trajectory in f_preprocessed] # starting datapoints, assumes files contain data
-	timestamps = [datetime.strptime(datapoint[1], '%d %H:%M') for datapoint in datapoints] # the first timestamp of every file, assumes files contain data
+	datapoints = [format_datapoint(trajectory.readline().split(',')) for trajectory in f_preprocessed] # starting datapoints, assumes files contain data
+	timestamps = [datapoint[1] for datapoint in datapoints] # the first timestamp of every file, assumes files contain data
 
 	timeline = min(timestamps) # The universal timeline
 	timeline_rate = timedelta(minutes=rate)
 
 
-	clusters_curr_timestamp = np.array([])
-	clusters_prev_timestamp = np.array([])
+	clusters_curr_timestamp = np.array([]) # 'tid', 'lat', 'lon', 'cid'
+	clusters_prev_timestamp = np.array([]) # 'tid', 'lat', 'lon', 'cid'
 
 	while(True):
 
 		datapoints = [calculate_next_datapoint(trajectory, timeline, timeline_rate, datapoints[i]) for i, trajectory in enumerate(f_preprocessed)]
-		timestamps = [datetime.strptime(datapoint[1], '%d %H:%M') if datapoint != None else None for datapoint in datapoints]
+		timestamps = [datapoint[1] if datapoint != None else None for datapoint in datapoints]
 		
 
 		# Stop Condition: If all files have been read, stop
 		if all(datapoint == None for datapoint in datapoints): break
 
 		# Performs DBSCAN only on those points that are valid (less than universal timestamp)
-		datapoints_valid = np.array([[datapoints[i][0], datapoints[i][2], datapoints[i][3]] for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp])
-		clusters_curr_timestamp = np.c_[datapoints_valid, dbscan(datapoints_valid[:,1:3].astype(np.float64)).labels_] # np.float64 required to avoid warning
-		clusters_curr_timestamp[:,-1] = (clusters_curr_timestamp[:,-1].astype(int)*-1-1).astype(str)  # so traj without clusters have cluster id zero
+		datapoints_valid = np.array([(datapoints[i][0], datapoints[i][2], datapoints[i][3]) for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp], dtype=[('tid','i4'),('lat','f4'),('lon','f4')])
+		datapoints_valid_temp = datapoints_valid[list(datapoints_valid.dtype.names[1:])].copy() # get lats and longs
+		db = dbscan(datapoints_valid_temp.view(np.float32).reshape(datapoints_valid_temp.shape + (-1,))).labels_ # performs dbscan and get labels
+		clusters_curr_timestamp = append_fields(datapoints_valid, 'cid', data = tuple(db), dtypes='i4', usemask=False)
+		clusters_curr_timestamp['cid'] = (clusters_curr_timestamp['cid']*-1-1)  # so traj without clusters have cluster id zero
+
 
 
 		# Calculate Relations
-		dict_cluster_prev_timestamp, dict_cluster_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
-
-		print('---------------------------------------------')
-		print('dict_cluster_prev_timestamp')
-		print(dict_cluster_prev_timestamp)
-		print('dict_cluster_curr_timestamp')
-		print(dict_cluster_curr_timestamp)
+		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
 
 		# # Calculate Similarity across timestamps
 		# dict_cross_cluster = calc_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
 
 		# Assign universal cluster ids and update cluster ids
-		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, dict_cross_cluster)
+		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
 
 		# Save Relations
 		#save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
@@ -115,7 +113,7 @@ def calculate_next_datapoint(traj, tl, tl_rate, prev_datapoint):
 	if prev_datapoint is None: return None
 
 	# Checks if needs to update
-	if datetime.strptime(prev_datapoint[1], '%d %H:%M') >= tl: return prev_datapoint
+	if prev_datapoint[1] >= tl: return prev_datapoint
 
 	# Tries to update
 	pos = traj.tell()
@@ -127,7 +125,7 @@ def calculate_next_datapoint(traj, tl, tl_rate, prev_datapoint):
 		if line == '': break # EOF
 		if datetime.strptime(line.split(',')[1], '%d %H:%M') > tl:
 			traj.seek(pos)
-			return curr_datapoint
+			return format_datapoint(curr_datapoint)
 		pos = traj.tell()
 		curr_datapoint = line.split(',')
 
@@ -135,8 +133,14 @@ def calculate_next_datapoint(traj, tl, tl_rate, prev_datapoint):
 	if (tl - datetime.strptime(curr_datapoint[1], '%d %H:%M')) >= tl_rate:
 		return None
 	else:
-		return curr_datapoint
+		return format_datapoint(curr_datapoint)
 
+
+# A helper function to format a datapoint
+def format_datapoint(datapoint):
+	if datapoint == []: return []
+	if datapoint == None: return None
+	return [int(datapoint[0]), datetime.strptime(datapoint[1], '%d %H:%M'), float(datapoint[2]), float(datapoint[3])]
 
 
 
