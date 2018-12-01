@@ -224,15 +224,6 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 
 	# Updates data structures with new universal cluster ids
 
-	print('---------------------------------------------------------------------')
-	print(dict_update_cluster)
-
-	print('before update')
-	print(clusters_prev_timestamp)
-	print(clusters_curr_timestamp)
-	print(dict_cluster_prev_timestamp)
-	print(dict_cluster_curr_timestamp)
-
 	for internal_cluster_id in dict_update_cluster.keys():
 		# clusters_prev_timestamp[:,-1] = [dict_update_cluster[internal_cluster_id] if cluster_id == internal_cluster_id else cluster_id for cluster_id in clusters_prev_timestamp[:,-1]]
 		# clusters_curr_timestamp[:,-1] = [dict_update_cluster[internal_cluster_id] if cluster_id == internal_cluster_id else cluster_id for cluster_id in clusters_curr_timestamp[:,-1]]
@@ -244,7 +235,7 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 		# update values first
 		for cluster_id in dict_cluster_prev_timestamp[internal_cluster_id]:
 			if cluster_id[0] in dict_update_cluster.keys():
-				cluster_id[0] = dict_update_cluster[internal_cluster_id]
+				cluster_id[0] = dict_update_cluster[cluster_id[0]]
 		# update keys later
 		if internal_cluster_id in dict_update_cluster.keys():
 			dict_cluster_prev_timestamp[dict_update_cluster[internal_cluster_id]] = dict_cluster_prev_timestamp.pop(internal_cluster_id)
@@ -254,17 +245,10 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 		# update values first
 		for cluster_id in dict_cluster_curr_timestamp[internal_cluster_id]:
 			if cluster_id[0] in dict_update_cluster.keys():
-				cluster_id[0] = dict_update_cluster[internal_cluster_id]
+				cluster_id[0] = dict_update_cluster[cluster_id[0]]
 		# update keys later
 		if internal_cluster_id in dict_update_cluster.keys():
 			dict_cluster_curr_timestamp[dict_update_cluster[internal_cluster_id]] = dict_cluster_curr_timestamp.pop(internal_cluster_id)
-
-
-	print('after update')
-	print(clusters_prev_timestamp)
-	print(clusters_curr_timestamp)
-	print(dict_cluster_prev_timestamp)
-	print(dict_cluster_curr_timestamp)
 
 
 	# cluster_prev_timestamp
