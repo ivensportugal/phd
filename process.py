@@ -90,7 +90,7 @@ def process():
 		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
 
 		# Save Relations
-		#save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
+		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
 
 
 		# Updates for next iteration: timeline, and cluster list
@@ -125,15 +125,15 @@ def calculate_next_datapoint(traj, tl, tl_rate, prev_datapoint):
 		if line == '': break # EOF
 		if datetime.strptime(line.split(',')[1], '%d %H:%M') > tl:
 			traj.seek(pos)
-			return format_datapoint(curr_datapoint)
+			return curr_datapoint
 		pos = traj.tell()
-		curr_datapoint = line.split(',')
+		curr_datapoint = format_datapoint(line.split(','))
 
 	# If the timestamp I have is old, then do not use it. It has been processed already
-	if (tl - datetime.strptime(curr_datapoint[1], '%d %H:%M')) >= tl_rate:
+	if (tl - curr_datapoint[1]) >= tl_rate:
 		return None
 	else:
-		return format_datapoint(curr_datapoint)
+		return curr_datapoint
 
 
 # A helper function to format a datapoint
