@@ -1,5 +1,6 @@
 import constant
 from constant import min_shared
+from constant import min_cluster
 from constant import lifecycle_dir
 from constant import file_suffix
 from constant import NO_CLUSTER
@@ -32,14 +33,19 @@ START_TXT = 'starts'
 
 
 # Checks if c1 and c2 are the same cluster according to the minShared percentage
-def is_same(c1, c2):
+def is_same(c1, c2, c1_leave, c2_enter, common):
 
 	n_c1 = float(len(c1))
 	n_c2 = float(len(c2))
-	if n_c1 == 0 or n_c2 == 0: return False
-	n_intersect = float(len([traj for traj in c1 if traj in c2]))
+	n_c1_leave = float(len(c1_leave))
+	n_c2_enter = float(len(c2_enter))
+	n_common = float(len(common))
 
-	if n_intersect / n_c1 >= min_shared and n_intersect / n_c2 >= min_shared:
+	if n_c1 == 0: return False
+	if n_c2 == 0: return False
+	if n_c  == 0: return False
+
+	if n_common / (n_c1 - n_c1_leave) >= min_shared and n_common / (n_c2 - n_c2_enter) >= min_shared:
 		return True
 	else:
 		return False
@@ -89,35 +95,45 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
-	# Create dictionary of clusters x clusters for previous and current timestamps
-	# Note the 'cluster' at the dictionary name
-	dict_cluster_prev_timestamp = {k: [] for k in cluster_list_prev}
-	dict_cluster_curr_timestamp = {k: [] for k in cluster_list_curr}
+	# Identifies individual trajectories that leave of enter
 
 	# Populate dictionaries with their relations with other clusters
-
+	individual_traj_leave = dict_traj_prev_timestamp.copy()
 	individual_traj_enter = dict_traj_curr_timestamp.copy()
 
 	for cluster_prev in dict_traj_prev_timestamp:
 
-		individual_traj_leave = list(dict_traj_prev_timestamp[cluster_prev])
+		for cluster_curr in dict_traj_curr_timestamp:
+
+			# If a trajectory did not go to any other cluster, then it is a LEAVE relation.
+			# If a trajectory did not come from any other cluster, then it is an ENTER relation.
+
+			# Eliminates trajectories we know went to another cluster
+			individual_traj_leave[cluster_prev] = np.setdiff1d(individual_traj_leave[cluster_prev], common_traj)
+			# Eliminates trajectories we know came from another cluster
+			individual_traj_enter[cluster_curr] = np.setdiff1d(individual_traj_enter[cluster_curr], common_traj)
+
+
+
+
+	# Use individual trajectories to calculate cross temporal cluster similarity and associate clusters
+
+	# Note the 'cluster' at the dictionary name
+	dict_cluster_prev_timestamp = {k: [] for k in cluster_list_prev}
+	dict_cluster_curr_timestamp = {k: [] for k in cluster_list_curr}
+
+
+	for cluster_prev in dict_traj_prev_timestamp:
 
 		for cluster_curr in dict_traj_curr_timestamp:
 
 			# Intersection of lists
 			common_traj = [traj for traj in dict_traj_prev_timestamp[cluster_prev] if traj in dict_traj_curr_timestamp[cluster_curr]]
 
-			# Eliminates trajectories we know went to another cluster
-			individual_traj_leave = np.setdiff1d(individual_traj_leave, common_traj)
-			# Eliminates trajectories we know came from another cluster
-			individual_traj_enter[cluster_curr] = np.setdiff1d(individual_traj_enter[cluster_curr], common_traj)
-
-
 			# Associates cluster who share elements
+			# Calculate cross temporal cluster similarity
 			if len(common_traj) > 0:
-
-				# Calculate cross temporal cluster similarity
-				if is_same(dict_traj_prev_timestamp[cluster_prev], dict_traj_curr_timestamp[cluster_curr]):
+				if is_same(dict_traj_prev_timestamp[cluster_prev], dict_traj_curr_timestamp[cluster_curr], individual_traj_leave[cluster_prev], individual_traj_enter[cluster_curr], common_traj):
 					dict_cluster_prev_timestamp[cluster_prev].append([cluster_curr, SAME])
 					dict_cluster_curr_timestamp[cluster_curr].append([cluster_prev, SAME])
 				else:
@@ -125,24 +141,20 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 					dict_cluster_curr_timestamp[cluster_curr].append([cluster_prev, NO_RELATION])
 
 
+	# Mark individual trajectories as ENTER OR LEAVE
+	for cluster_prev in dict_traj_prev_timestamp:
+		dict_cluster_prev_timestamp[cluster_prev].extend([[traj, T_LEAVE] for traj in individual_traj_leave])
 
-		# Marks individual trajectories that left the cluster
-		for traj in individual_traj_leave:
-			dict_cluster_prev_timestamp.append([traj, T_LEAVE])
-				
+	for cluster_curr in dict_traj_curr_timestamp:
+		dict_cluster_curr_timestamp[cluster_curr].extend([[traj, T_ENTER] for traj in individual_traj_enter])
 
-	# mark individual trajectories that entered the cluster
-	for cluster_curr in individual_traj_enter:
-		for traj in individual_traj_enter[cluster_curr]:
-			dict_cluster_curr_timestamp[cluster_curr].append([traj, T_ENTER])
 
 
 	# At this point, potential cluster or trajectory enters and leaves are marked.
-	# Further analysis will associate same clusers in different timestamps and mark trajectories that continued in the cluster.
+
+
 
 	return dict_cluster_prev_timestamp, dict_cluster_curr_timestamp
-
-
 
 
 
@@ -199,7 +211,7 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 	# 	constant.cluster_id_counter += 1
 
 
-	# Identify new clusters by looking for clusters without a IS_SAME relation
+	# Identify new clusters by looking for clusters without a SAME relation
 	# Assign an universal id to new clusters
 	# Store results in a list for later updates
 

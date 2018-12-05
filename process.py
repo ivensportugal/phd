@@ -82,6 +82,11 @@ def process():
 
 		# Calculate Relations
 		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
+		print('--------------------------------------------------')
+		print('dict_clusters_prev_timestamp')
+		print(dict_clusters_prev_timestamp)
+		print('dict_clusters_curr_timestamp')
+		print(dict_clusters_curr_timestamp)
 
 		# # Calculate Similarity across timestamps
 		# dict_cross_cluster = calc_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
