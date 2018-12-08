@@ -116,6 +116,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
+	# IDENTIFIES SAME C_ENTER, C_LEAVE
 	# Use individual trajectories to calculate cross temporal cluster similarity and associate clusters
 
 	# Note the 'cluster' at the dictionary name
@@ -137,9 +138,22 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 					dict_cluster_prev_timestamp[cluster_prev].append([cluster_curr, SAME])
 					dict_cluster_curr_timestamp[cluster_curr].append([cluster_prev, SAME])
 				else:
-					dict_cluster_prev_timestamp[cluster_prev].append([cluster_curr, NO_RELATION])
-					dict_cluster_curr_timestamp[cluster_curr].append([cluster_prev, NO_RELATION])
+					dict_cluster_prev_timestamp[cluster_prev].append([cluster_curr, C_LEAVE])
+					dict_cluster_curr_timestamp[cluster_curr].append([cluster_prev, C_ENTER])
 
+
+
+	# IDENTIFIES SPLIT (No SAME + 2+ C_LEAVE)
+	for cluster_prev in dict_traj_prev_timestamp:
+		n_same = len([1 for cluster in dict_traj_prev_timestamp if cluster[1] == SAME])
+		n_leave = len([1 for cluster in dict_traj_prev_timestamp if cluster[1] == C_LEAVE])
+
+
+
+
+
+
+	# IDENTIFIES T_ENTER, T_LEAVE
 
 	# Mark individual trajectories as ENTER OR LEAVE
 	for cluster_prev in dict_traj_prev_timestamp:
@@ -151,6 +165,9 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 	# At this point, potential cluster or trajectory enters and leaves are marked.
+
+
+
 
 
 
