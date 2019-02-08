@@ -52,15 +52,15 @@ def process():
 	for trajectory in trajectories:
 		f_preprocessed.append(open(preprocessed_dir + trajectory, 'r'))
 
-	datapoints = [format_datapoint(trajectory.readline().split(',')) for trajectory in f_preprocessed] # starting datapoints, assumes files contain data
+	datapoints = [format_datapoint(trajectory.readline().split(',')) for trajectory in f_preprocessed] # starting datapoints, assumes files contain data, [[int, time, float, float]]
 	timestamps = [datapoint[1] for datapoint in datapoints] # the first timestamp of every file, assumes files contain data
 
 	timeline = min(timestamps) # The universal timeline
 	timeline_rate = timedelta(minutes=rate)
 
 
-	clusters_curr_timestamp = np.array([]) # 'tid', 'lat', 'lon', 'cid'
-	clusters_prev_timestamp = np.array([]) # 'tid', 'lat', 'lon', 'cid'
+	clusters_curr_timestamp = np.array([]) # 'tid', 'lat', 'lon', 'cid' <- these are labels - int, float, float, int
+	clusters_prev_timestamp = np.array([]) # 'tid', 'lat', 'lon', 'cid' <- these are labels - int, float, float, int
 
 	while(True):
 
@@ -76,20 +76,20 @@ def process():
 		datapoints_valid_temp = datapoints_valid[list(datapoints_valid.dtype.names[1:])].copy() # get lats and longs
 		db = dbscan(datapoints_valid_temp.view(np.float32).reshape(datapoints_valid_temp.shape + (-1,))).labels_ # performs dbscan and get labels
 		clusters_curr_timestamp = append_fields(datapoints_valid, 'cid', data = tuple(db), dtypes='i4', usemask=False)
-		clusters_curr_timestamp['cid'] = (clusters_curr_timestamp['cid']*-1-1)  # so traj without clusters have cluster id zero
+		clusters_curr_timestamp['cid'] = (clusters_curr_timestamp['cid']*-1-1)  # so traj without clusters have cluster id zero, internal are negative, external are positive
 
 
 
 		# Calculate Relations
-		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
 		print('--------------------------------------------------')
+		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
 		print('dict_clusters_prev_timestamp')
 		print(dict_clusters_prev_timestamp)
 		print('dict_clusters_curr_timestamp')
 		print(dict_clusters_curr_timestamp)
 
 		# # Calculate Similarity across timestamps
-		# dict_cross_cluster = calc_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
+		# dict_cross_cluster = calc_similarity(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp) # calculated in calc_relations()
 
 		# Assign universal cluster ids and update cluster ids
 		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
