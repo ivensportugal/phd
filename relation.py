@@ -158,21 +158,41 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
-	# IDENTIFY DISPERSE (No SAME and 2+ T_LEAVE)
-	# IDENTIFY SPLIT    (No SAME and 2+ C_LEAVE)
+	# IDENTIFY DISPERSE (0 SAME and 0  C_OUT)
+	# IDENTIFY C_ENTER  (0 SAME and 1  C_OUT)
+	# IDENTIFY SPLIT    (0 SAME and 2+ C_OUT)
+	# IDENTIFY C_LEAVE  (1 SAME and conditions)
 	for cluster_prev in dict_cluster_prev_timestamp:
-		n_same = len([1 for cluster in dict_clgmuster_prev_timestamp[cluster_prev] if cluster[1] == SAME])
-		n_leave = len([1 for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[1] == C_LEAVE])
-		if n_same > 0 and n_leave > 1:
-			dict_cluster_prev_timestamp[cluster_prev] = [[cluster[0], SPLIT] if cluster[1] == C_LEAVE else cluster for cluster in dict_cluster_prev_timestamp[cluster_prev]]
+		n_same = len([1 for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == SAME])
+		n_out  = len([1 for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_OUT])
+		if n_same == 0:
+			if n_out == 0:
+				# DISPERSE
+				disperse = [traj[0] if traj[-1] == T_LEAVE for traj in dict_cluster_prev_timestamp[cluster_prev]]
+				dict_cluster_prev_timestamp[cluster_prev] = [cluster if cluster[-1] != T_LEAVE for cluster in dict_cluster_prev_timestamp[cluster_prev]]
+				dict_cluster_prev_timestamp[cluster_prev].append([disperse, DISPERSE])
+			if n_out == 1:
+				# C_ENTER
+			if n_out >= 2:
+				# SPLIT
+		if n_same == 1:
+			if n_out == 1:
+				# C_LEAVE or C_OUT
+			if n_out >= 2:
+				# C_LEAVE or C_OUT
+		if n_same >= 2:
+			print("ERROR")
+
+
+			dict_cluster_prev_timestamp[cluster_prev] = [[cluster[0], SPLIT] if cluster[-1] == C_LEAVE else cluster for cluster in dict_cluster_prev_timestamp[cluster_prev]]
 
 	# IDENTIFY GROUP (No Same and 2+ T_ENTER)
 	# IDENTIFY MERGE (No SAME and 2+ C_ENTER)
 	for cluster_curr in dict_cluster_curr_timestamp:
-		n_same = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[1] == SAME])
-		n_enter = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[1] == C_ENTER])
-		if n_same > 0 and n_enter > 1:
-			dict_cluster_curr_timestamp[cluster_curr] = [[cluster[0], MERGE] if cluster[1] == C_ENTER else cluster for cluster in dict_cluster_curr_timestamp[cluster_curr]]
+		n_same = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == SAME])
+		n_in   = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN])
+		if n_same > 0 and n_in  > 1:
+			dict_cluster_curr_timestamp[cluster_curr] = [[cluster[0], MERGE] if cluster[-1] == C_ENTER else cluster for cluster in dict_cluster_curr_timestamp[cluster_curr]]
 
 
 
