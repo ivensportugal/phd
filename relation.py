@@ -168,43 +168,102 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 		if n_same == 0:
 			if n_out == 0:
 				# DISPERSE
-				disperse = [traj[0] if traj[-1] == T_LEAVE for traj in dict_cluster_prev_timestamp[cluster_prev]]
-				dict_cluster_prev_timestamp[cluster_prev] = [cluster if cluster[-1] != T_LEAVE for cluster in dict_cluster_prev_timestamp[cluster_prev]]
-				dict_cluster_prev_timestamp[cluster_prev].append([disperse, DISPERSE])
+				temp = [traj[0] for traj in dict_cluster_prev_timestamp[cluster_prev] if traj[-1] == T_LEAVE]
+				dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != T_LEAVE]
+				dict_cluster_prev_timestamp[cluster_prev].append([temp, DISPERSE])
 			if n_out == 1:
 				# C_ENTER
+				temp = [cluster[0] for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != C_OUT]
+				dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != C_OUT]
+				dict_cluster_prev_timestamp[cluster_prev].append([temp[0], C_ENTER])
 			if n_out >= 2:
 				# SPLIT
+				temp = [cluster[0] for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != C_OUT]
+				dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != C_OUT]
+				dict_cluster_prev_timestamp[cluster_prev].append([temp, SPLIT])
 		if n_same == 1:
-			if n_out == 1:
+			if n_out >= 1:
 				# C_LEAVE or C_OUT
-			if n_out >= 2:
-				# C_LEAVE or C_OUT
+				temp = [cluster[0] for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != C_OUT]
+				dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != C_OUT]
+				f = lambda x: [cluster[-1] for cluster in x].count(True)
+				has_same = [f(dict_cluster_curr_timestamp[t]) for t in temp]
+				for i in range(len(temp)):
+					if(has_same[i] == 0):
+						#C_LEAVE
+						dict_cluster_prev_timestamp[cluster_prev].append([temp[i], C_LEAVE])
+					else:
+						#C_OUT
+						dict_cluster_prev_timestamp[cluster_prev].append([temp[i], C_OUT])
 		if n_same >= 2:
 			print("ERROR")
 
 
-			dict_cluster_prev_timestamp[cluster_prev] = [[cluster[0], SPLIT] if cluster[-1] == C_LEAVE else cluster for cluster in dict_cluster_prev_timestamp[cluster_prev]]
 
-	# IDENTIFY GROUP (No Same and 2+ T_ENTER)
-	# IDENTIFY MERGE (No SAME and 2+ C_ENTER)
-	for cluster_curr in dict_cluster_curr_timestamp:
-		n_same = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == SAME])
-		n_in   = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN])
-		if n_same > 0 and n_in  > 1:
-			dict_cluster_curr_timestamp[cluster_curr] = [[cluster[0], MERGE] if cluster[-1] == C_ENTER else cluster for cluster in dict_cluster_curr_timestamp[cluster_curr]]
-
-
-
-
-	# IDENTIFIES T_ENTER, T_LEAVE
+	# IDENTIFIES individual T_ENTER, T_LEAVE
 
 	# Mark individual trajectories as ENTER OR LEAVE
 	for cluster_prev in individual_traj_leave:
-		dict_cluster_prev_timestamp[cluster_prev].extend([[traj, T_LEAVE] for traj in individual_traj_leave[cluster_prev]])
+		dict_cluster_prev_timestamp[cluster_prev].extend([[traj, 0, T_LEAVE] for traj in individual_traj_leave[cluster_prev]])
 
 	for cluster_curr in dict_traj_curr_timestamp:
-		dict_cluster_curr_timestamp[cluster_curr].extend([[traj, T_ENTER] for traj in individual_traj_enter[cluster_curr]])
+		dict_cluster_curr_timestamp[cluster_curr].extend([[traj, 0, T_ENTER] for traj in individual_traj_enter[cluster_curr]])
+
+
+
+	# IDENTIFY GROUP    (0 SAME and 0  C_IN)
+	# IDENTIFY C_LEAVE  (0 SAME and 1  C_IN)
+	# IDENTIFY MERGE    (0 SAME and 2+ C_IN)
+	# IDENTIFY C_ENTER  (1 SAME and conditions)
+	for cluster_curr in dict_cluster_curr_timestamp:
+		n_same = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == SAME])
+		n_in   = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN])
+		if n_same == 0:
+			if n_in  == 0:
+				# GROUP
+				temp = [traj[0] for traj in dict_cluster_curr_timestamp[cluster_curr] if traj[-1] == T_ENTER]
+				dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != T_ENTER]
+				dict_cluster_curr_timestamp[cluster_curr].append([temp, GROUP])
+			if n_in == 1:
+				# C_LEAVE
+				temp = [cluster[0] for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != C_IN]
+				dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != C_IN]
+				dict_cluster_curr_timestamp[cluster_curr].append([temp[0], C_LEAVE])
+			if n_in >= 2:
+				# MERGE
+				temp = [cluster[0] for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != C_IN]
+				dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != C_IN]
+				dict_cluster_curr_timestamp[cluster_curr].append([temp, MERGE])
+		if n_same == 1:
+			if n_in >= 1:
+				# C_ENTER or C_IN 
+				temp = [cluster[0] for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != C_IN]
+				dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != C_IN]
+				f = lambda x: [cluster[-1] for cluster in x].count(True)
+				has_same = [f(dict_cluster_prev_timestamp[t]) for t in temp]
+				for i in range(len(temp)):
+					if(has_same[i] == 0):
+						#C_ENTER
+						dict_cluster_curr_timestamp[cluster_curr].append([temp[i], C_ENTER])
+					else:
+						#C_IN 
+						dict_cluster_curr_timestamp[cluster_curr].append([temp[i], C_IN ])
+		if n_same >= 2:
+			print("ERROR")
+
+
+
+
+	# IDENTIFY GROUP (No Same and 2+ T_ENTER)
+	# IDENTIFY MERGE (No SAME and 2+ C_ENTER)
+	#for cluster_curr in dict_cluster_curr_timestamp:
+	#	n_same = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == SAME])
+	#	n_in   = len([1 for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN])
+	#	if n_same > 0 and n_in  > 1:
+	#		dict_cluster_curr_timestamp[cluster_curr] = [[cluster[0], MERGE] if cluster[-1] == C_ENTER else cluster for cluster in dict_cluster_curr_timestamp[cluster_curr]]
+
+
+
 
 
 
@@ -224,7 +283,7 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 	for cluster_curr in dict_cluster_curr_timestamp:
 		exists_before = False
 		for cluster_prev in dict_cluster_curr_timestamp[cluster_curr]:
-			if cluster_prev[1] == SAME:
+			if cluster_prev[-1] == SAME:
 				exists_before = True
 				if cluster_curr != cluster_prev[0]:
 					dict_update_cluster[cluster_curr] = cluster_prev[0]
@@ -245,9 +304,15 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 
 	for internal_cluster_id in dict_cluster_prev_timestamp:
 		# update values first
-		for cluster_id in dict_cluster_prev_timestamp[internal_cluster_id]:
-			if cluster_id[0] in dict_update_cluster.keys():
-				cluster_id[0] = dict_update_cluster[cluster_id[0]]
+		for cluster_id in  dict_cluster_prev_timestamp[internal_cluster_id]:
+			if type(cluster_id[0]) != list:
+				if cluster_id[0] in dict_update_cluster.keys():
+					cluster_id[0] = dict_update_cluster[cluster_id[0]]
+			else:
+					for c in cluster_id[0]:
+						if c in dict_update_cluster.keys():
+					 		c = dict_update_cluster[c]
+
 		# update keys later
 		if internal_cluster_id in dict_update_cluster.keys():
 			dict_cluster_prev_timestamp[dict_update_cluster[internal_cluster_id]] = dict_cluster_prev_timestamp.pop(internal_cluster_id)
@@ -256,8 +321,14 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 	for internal_cluster_id in dict_cluster_curr_timestamp:
 		# update values first
 		for cluster_id in dict_cluster_curr_timestamp[internal_cluster_id]:
-			if cluster_id[0] in dict_update_cluster.keys():
-				cluster_id[0] = dict_update_cluster[cluster_id[0]]
+			if type(cluster_id[0]) != list:
+				if cluster_id[0] in dict_update_cluster.keys():
+					cluster_id[0] = dict_update_cluster[cluster_id[0]]
+			else:
+				for c in cluster_id[0]:
+					if c in dict_update_cluster.keys():
+						c = dict_update_cluster[c]
+
 		# update keys later
 		if internal_cluster_id in dict_update_cluster.keys():
 			dict_cluster_curr_timestamp[dict_update_cluster[internal_cluster_id]] = dict_cluster_curr_timestamp.pop(internal_cluster_id)
@@ -269,15 +340,25 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 
 def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, prev_timestamp, curr_timestamp):
 
-	new_clusters = {} # stores new clusters
+	#new_clusters = {} # stores new clusters
 
 	# Process Start relations
+	#for cluster_curr in dict_cluster_curr_timestamp:
+	#	if is_start(dict_cluster_curr_timestamp[cluster_curr]):
+	#		new_cluster_id = constant.cluster_id_counter
+	#		constant.cluster_id_counter += 1
+	#		save_start(cluster_curr, new_cluster_id, curr_timestamp, dict_cluster_curr_timestamp[cluster_curr])
+	#		new_clusters[cluster_curr] = new_cluster_id
+
+
+	# Process Start relations (group or merge)
 	for cluster_curr in dict_cluster_curr_timestamp:
-		if is_start(dict_cluster_curr_timestamp[cluster_curr]):
-			new_cluster_id = constant.cluster_id_counter
-			constant.cluster_id_counter += 1
-			save_start(cluster_curr, new_cluster_id, curr_timestamp, dict_cluster_curr_timestamp[cluster_curr])
-			new_clusters[cluster_curr] = new_cluster_id
+		start = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == GROUP or cluster[-1] == MERGE]
+		if(len(start) > 0):
+			save_start(cluster_curr, curr_timestamp)
+
+	
+
 
 	# Process Leave / Split relations
 	#for 
@@ -290,8 +371,13 @@ def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, pre
 
 
 
-def save_start(old_id, new_id, timestamp, clusters):
+def save_start(id, timestamp):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
 	print 'save_start'
+	print(sts + ' start ' + sid)
 	# f = open(lifecycle_dir + str(new_id) + file_suffix, 'w')
 	# s = ''
 	# for cluster in clusters:
