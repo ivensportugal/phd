@@ -4,6 +4,7 @@ from constant import min_cluster
 from constant import lifecycle_dir
 from constant import file_suffix
 from constant import NO_CLUSTER
+from file import save_relation
 
 import numpy as np
 from datetime import datetime
@@ -351,24 +352,98 @@ def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, pre
 	#		new_clusters[cluster_curr] = new_cluster_id
 
 
-	# Process Start relations (group or merge)
+	# Process START relations (group or merge)
 	for cluster_curr in dict_cluster_curr_timestamp:
-		start = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == GROUP or cluster[-1] == MERGE]
-		if(len(start) > 0):
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == GROUP or cluster[-1] == MERGE or cluster[-1] == C_LEAVE]
+		if(len(relation) > 0):
 			save_start(cluster_curr, curr_timestamp)
 
-	
+	# Process MERGE relations
+	for cluster_curr in dict_cluster_curr_timestamp:
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == MERGE]
+		if(len(relation) > 0):
+			save_merge(cluster_curr, curr_timestamp, relation[0][0])
+
+	# Process GROUP relations
+	for cluster_curr in dict_cluster_curr_timestamp:
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == GROUP]
+		if(len(relation) > 0):
+			save_group(cluster_curr, curr_timestamp, relation[0][0])
+
+	# Process C_LEAVE relations (in current)
+	for cluster_curr in dict_cluster_curr_timestamp:
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_LEAVE]
+		if(len(relation) > 0):
+			save_c_leave(cluster_curr, curr_timestamp, relation[0][0])
 
 
-	# Process Leave / Split relations
-	#for 
 
-	# Process Enter / Merge
-	#for
 
-	# Process End relations
-	#for
+	# Process T_LEAVE relations
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_curr] if cluster[-1] == T_LEAVE]
+		for r in relation:
+			save_t_leave(cluster_prev, prev_timestamp, r[0], r[1])
 
+	# Process C_LEAVE relations
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_curr] if cluster[-1] == C_LEAVE]
+		for r in relation:
+			save_c_leave(cluster_prev, prev_timestamp, r[0])
+
+	# Process C_OUT relations
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_curr] if cluster[-1] == C_OUT]
+		for r in relation:
+			save_c_out(cluster_prev, prev_timestamp, r[0], r[1])
+
+
+
+
+	# Process C_IN relations
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_curr] if cluster[-1] == C_IN]
+		for r in relation:
+			save_c_in(cluster_prev, prev_timestamp, r[0], r[1])
+
+	# Process C_ENTER relations
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_curr] if cluster[-1] == C_ENTER]
+		for r in relation:
+			save_c_enter(cluster_prev, prev_timestamp, r[0])
+
+	# Process T_ENTER relations
+	for cluster_curr in dict_cluster_curr_timestamp:
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == T_ENTER]
+		for r in relation:
+			save_t_enter(cluster_curr, curr_timestamp, r[0], r[1])
+
+
+
+
+	# Process C_ENTER relations (in previous)
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_curr] if cluster[-1] == C_ENTER]
+		if(len(relation) > 0):
+			save_c_enter(cluster_prev, prev_timestamp, relation[0][0])
+
+	# Process DISPERSE relations
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == DISPERSE]
+		if(len(relation) > 0):
+			save_disperse(cluster_prev, prev_timestamp, relation[0][0])
+
+	# Process SPLIT relations
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == SPLIT]
+		if(len(relation) > 0):
+			save_split(cluster_prev, prev_timestamp, relation[0][0])
+
+	# Process END relations (group or merge)
+	for cluster_prev in dict_cluster_prev_timestamp:
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == DISPERSE or cluster[-1] == SPLIT or cluster[-1] == C_ENTER]
+		if(len(relation) > 0):
+			save_end(cluster_prev, prev_timestamp)
 
 
 def save_start(id, timestamp):
@@ -376,13 +451,187 @@ def save_start(id, timestamp):
 	sid = str(id)
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' start(' + sid + ')'
+
+	save_relation(path, s)
+
 	print 'save_start'
-	print(sts + ' start ' + sid)
-	# f = open(lifecycle_dir + str(new_id) + file_suffix, 'w')
-	# s = ''
-	# for cluster in clusters:
-	# 	s += cluster + ', '
-	# timestamp_str = datetime.strftime(timestamp, '%d %H:%M')
-	# f.write(timestamp_str + ': ' + str(new_id) + ' ' + START_TXT + '(' + s + ').')
 
 
+def save_merge(id, timestamp, clusters):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	
+	c = ''
+	for cluster in clusters:
+		c += str(cluster) + ', '
+	c = c[:-2] # removes last ', '
+
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' merge([' + c + '], ' + sid + ')'
+
+	save_relation(path, s)
+
+	print 'save_merge'
+
+
+def save_group(id, timestamp, trajs):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = ''
+	for traj in trajs:
+		t += str(traj) + ', '
+	t = t[:-2] # removes last ', '
+
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' group([' + t + '], ' + sid + ')'
+
+	save_relation(path, s)
+
+	print 'save_group'
+
+
+def save_t_leave(id, timestamp, traj, cluster):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = str(traj)
+	path = lifecycle_dir + sid + file_suffix
+	c = str(cluster)
+	s = sts + ' t_leave(' + t + ', ' + sid + ', ' + c +')'
+
+	save_relation(path, s)
+
+	print 'save_t_leave'
+
+
+def save_c_leave(id, timestamp, cluster):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	c = str(cluster)
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' c_leave(' + c + ', ' + sid + ')' 
+
+	save_relation(path, s)
+
+	print 'save_c_leave'
+
+
+def save_c_out(id, timestamp, trajs, cluster):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = ''
+	for traj in trajs:
+		t += str(traj) + ', '
+	t = t[:-2] # removes last ', '
+
+	c = str(cluster)
+
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' c_out([' + t + '], ' + sid + ', ' + c + ')'
+
+	save_relation(path, s)
+
+	print 'save_c_out'
+
+
+def save_c_in(id, timestamp, trajs, cluster):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = ''
+	for traj in trajs:
+		t += str(traj) + ', '
+	t = t[:-2] # removes last ', '
+
+	c = str(cluster)
+
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' c_in([' + t + '], ' + c + ', ' + sid + ')'
+
+	print 'save_c_in'
+
+
+def save_c_enter(id, timestamp, cluster):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	c = str(cluster)
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' c_enter(' + c + ', ' + sid + ')' 
+
+	print 'save_c_enter'
+
+
+def save_t_enter(id, timestamp, traj, cluster):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = str(traj)
+	path = lifecycle_dir + sid + file_suffix
+	c = str(cluster)
+	s = sts + ' t_leave(' + t + ', ' + c + ', ' + sid +')'
+
+	print 'save_t_enter'
+
+
+def save_disperse(id, timestamp, trajs):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = ''
+	for traj in trajs:
+		t += str(traj) + ', '
+	t = t[:-2] # removes last ', '
+
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' disperse([' + t + '], ' + sid + ')'
+
+	save_relation(path, s)
+
+	print 'save_disperse'
+
+
+def save_split(id, timestamp, clusters):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	c = ''
+	for cluster in clusters:
+		c += str(cluster) + ', '
+	c = c[:-2] # removes last ', '
+
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' split([' + c + '], ' + sid + ')'
+
+	save_relation(path, s)
+
+	print 'save_split'
+
+
+def save_end(id, timestamp):
+
+	sid = str(id)
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' end(' + sid + ')'
+
+	save_relation(path, s)
+
+	print 'save_end'
