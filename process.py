@@ -64,8 +64,11 @@ def process():
 	timeline_rate = timedelta(minutes=rate)
 
 
-	clusters_curr_timestamp = np.array([], dtype=[('tid','i4'),('lat','f4'),('lon','f4'),('cid','i4')]) # 'tid', 'lat', 'lon', 'cid' <- these are labels - int, float, float, int
-	clusters_prev_timestamp = np.array([], dtype=[('tid','i4'),('lat','f4'),('lon','f4'),('cid','i4')]) # 'tid', 'lat', 'lon', 'cid' <- these are labels - int, float, float, int
+	#clusters_curr_timestamp = np.array([], dtype=[('tid','i4'),('lat','f4'),('lon','f4'),('cid','i4')]) # 'tid', 'lat', 'lon', 'cid' <- these are labels - int, float, float, int
+	#clusters_prev_timestamp = np.array([], dtype=[('tid','i4'),('lat','f4'),('lon','f4'),('cid','i4')]) # 'tid', 'lat', 'lon', 'cid' <- these are labels - int, float, float, int
+
+	clusters_curr_timestamp = np.array([]) # int, float, float, int
+	clusters_prev_timestamp = np.array([]) # int, float, float, int
 
 	while(True):
 
@@ -77,11 +80,20 @@ def process():
 		if all(datapoint == None for datapoint in datapoints): break
 
 		# Performs DBSCAN only on those points that are valid (less than universal timestamp)
-		datapoints_valid = np.array([(datapoints[i][0], datapoints[i][2], datapoints[i][3]) for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp], dtype=[('tid','i4'),('lat','f4'),('lon','f4')])
-		datapoints_valid_temp = datapoints_valid[list(datapoints_valid.dtype.names[1:])].copy() # get lats and longs
+		#datapoints_valid = np.array([(datapoints[i][0], datapoints[i][2], datapoints[i][3]) for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp], dtype=[('tid','i4'),('lat','f4'),('lon','f4')])
+		#datapoints_valid_temp = datapoints_valid[list(datapoints_valid.dtype.names[1:])].copy() # get lats and longs
 		#db = dbscan(datapoints_valid_temp.view(np.float32).reshape(datapoints_valid_temp.shape + (-1,))).labels_ # performs dbscan and get labels
 		#clusters_curr_timestamp = append_fields(datapoints_valid, 'cid', data = tuple(db), dtypes='i4', usemask=False)
 		#clusters_curr_timestamp['cid'] = (clusters_curr_timestamp['cid']*-1-1)  # so traj without clusters have cluster id zero, internal are negative, external are positive
+
+		datapoints_valid = np.array([(datapoints[i][0], datapoints[i][2], datapoints[i][3]) for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp])
+
+		clusters_curr_timestamp = datapoints_valid[:,1:].copy() # get lats and longs
+		db = dbscan(clusters_curr_timestamp).labels_ # performs dbscan and get labels
+		clusters_curr_timestamp = np.zeros((datapoints_valid.shape[0],datapoints_valid.shape[1]+1)) # adds a column
+		clusters_curr_timestamp[:,:-1] = datapoints_valid
+		clusters_curr_timestamp[:,-1:] = np.array([db]).transpose()
+		clusters_curr_timestamp[:,-1:] = clusters_curr_timestamp[:,-1:]*-1-1  # so traj without clusters have cluster id zero, internal are negative, external are positive
 
 
 
