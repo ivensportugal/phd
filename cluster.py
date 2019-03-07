@@ -10,7 +10,7 @@ from math import radians, cos, sin, asin, sqrt
 
 def dbscan(datapoints):
 
-	if(datapoints.size == 0): return
+	if(datapoints.shape[0] < 2): return # cannot cluster a single trajectory
 
 	#db = dbscan_oo(datapoints) # normal DBSCAN
 	#db = dbscan_hn(datapoints) # DBSCAN with optimized haversine distance
@@ -23,6 +23,7 @@ def dbscan(datapoints):
 def dbscan_oo(datapoints):
 
 	db = DBSCAN(eps=eps, min_samples=min_samples, metric=dist).fit(datapoints)
+	return db
 
 
 # The DBSCAN algorithm with an optimized Haversine distance
@@ -56,7 +57,7 @@ def dbscan_hn(datapoints):
 
 def dbscan_hd(datapoints):
 
-	print(datapoints.shape)
+	datapoints = [[39.88781, 116.36422],[39.88777, 116.36421]]
 
 	clusterer = hdbscan.HDBSCAN(metric='haversine')
 	clusterer.fit(datapoints)
