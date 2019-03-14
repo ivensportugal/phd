@@ -1,3 +1,5 @@
+import sys
+
 #####
 #
 # TODO: DIVIDE THIS INTO CONSTANTS AND CONFIGURATIONS
@@ -11,15 +13,15 @@ medium_original_dir = './originals_medium/'
 large_original_dir  = './originals_all/'
 test_original_dir   = './originals_test/'
 
-original_dir     = test_original_dir
-preprocessed_dir = 'preprocessed/'
+original_dir     = sys.argv[1]
+preprocessed_dir = sys.argv[3] # 'preprocessed/'
 lifecycle_dir    = 'lifecycle/'
 
 file_suffix = '.txt'
 
 
 # Parameters
-min_cluster = 2
+min_cluster = int(sys.argv[2])
 min_shared  = 0.8
 
 

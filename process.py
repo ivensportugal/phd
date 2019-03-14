@@ -89,22 +89,22 @@ def process():
 		datapoints_valid = np.array([(datapoints[i][0], datapoints[i][2], datapoints[i][3]) for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp])
 
 		clusters_curr_timestamp = datapoints_valid[:,1:].copy() # get lats and longs
-		db = dbscan(clusters_curr_timestamp).labels_ # performs dbscan and get labels
+		labels = dbscan(clusters_curr_timestamp) # performs dbscan and get labels
 		clusters_curr_timestamp = np.zeros((datapoints_valid.shape[0],datapoints_valid.shape[1]+1)) # adds a column
 		clusters_curr_timestamp[:,:-1] = datapoints_valid
-		clusters_curr_timestamp[:,-1:] = np.array([db]).transpose()
+		clusters_curr_timestamp[:,-1:] = np.array([labels]).transpose()
 		clusters_curr_timestamp[:,-1:] = clusters_curr_timestamp[:,-1:]*-1-1  # so traj without clusters have cluster id zero, internal are negative, external are positive
 
 
 
 		# Calculate Relations
-		#dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
+		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
 
 		# Assign universal cluster ids and update cluster ids
-		#calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
+		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
 
 		# Save Relations
-		#save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
+		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
 
 
 		# Updates for next iteration: timeline, and cluster list
