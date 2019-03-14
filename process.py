@@ -20,7 +20,7 @@ import ciso8601
 
 
 ## Pre process files.
-## Removes year, month, day, second, and microsecond from datestamps
+## Removes microsecond from datestamps
 
 def preprocess():
 
@@ -35,7 +35,7 @@ def preprocess():
 			datapoint = line.split(',')
 			_id        = datapoint[0]
 			_timestamp = datetime.strptime(datapoint[1], '%Y-%m-%d %H:%M:%S')
-			_lat       = datapoint[3][0:-2] if '\n' in datapoint[3] else datapoint[3]  # removes '\n'
+			_lat       = datapoint[3][0:-1] if '\n' in datapoint[3] else datapoint[3]  # removes '\n'
 			_lon       = datapoint[2]
 
 			newline = _id + ',' + _timestamp.strftime('%Y-%m-%d %H:%M:%S') + ',' + _lat + ',' + _lon + '\n'

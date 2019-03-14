@@ -12,8 +12,8 @@ def dbscan(datapoints):
 
 	if(datapoints.shape[0] < 2): return [-1] # cannot cluster a single trajectory
 
-	#db = dbscan_oo(datapoints) # normal DBSCAN
-	#db = dbscan_hn(datapoints) # DBSCAN with optimized haversine distance
+	# db = dbscan_oo(datapoints) # normal DBSCAN
+	# db = dbscan_hn(datapoints) # DBSCAN with optimized haversine distance
 	db = dbscan_hd(datapoints) # HDBSCAN
 
 	return db.labels_
@@ -57,7 +57,7 @@ def dbscan_hn(datapoints):
 
 def dbscan_hd(datapoints):
 
-	clusterer = hdbscan.HDBSCAN(metric='haversine')
+	clusterer = hdbscan.HDBSCAN(min_cluster_size=min_samples, metric='haversine', allow_single_cluster=True)
 	clusterer.fit(datapoints)
 	return clusterer
 

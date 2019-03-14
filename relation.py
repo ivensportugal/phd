@@ -106,6 +106,15 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
+	# print('-----------------------')
+	# print('dict_clusters_prev_timestamp')
+	# print(dict_clusters_prev_timestamp)
+	# print('dict_clusters_curr_timestamp')
+	# print(dict_clusters_curr_timestamp)
+	# print('-----------------------')
+
+
+
 
 	# Identifies individual trajectories that leave or enter
 
@@ -254,8 +263,9 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 			if n_out == 0:
 				# DISPERSE
 				temp = [traj[0] for traj in dict_cluster_prev_timestamp[cluster_prev] if traj[-1] == T_LEAVE]
-				dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != T_LEAVE]
-				dict_cluster_prev_timestamp[cluster_prev].append([temp, DISPERSE])
+				if len(temp) > 0:
+					dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != T_LEAVE]
+					dict_cluster_prev_timestamp[cluster_prev].append([temp, DISPERSE])
 
 
 
@@ -272,8 +282,9 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 			if n_in  == 0:
 				# GROUP
 				temp = [traj[0] for traj in dict_cluster_curr_timestamp[cluster_curr] if traj[-1] == T_ENTER]
-				dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != T_ENTER]
-				dict_cluster_curr_timestamp[cluster_curr].append([temp, GROUP])
+				if len(temp) > 0:
+					dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != T_ENTER]
+					dict_cluster_curr_timestamp[cluster_curr].append([temp, GROUP])
 			if n_in == 1:
 				# C_LEAVE
 				# temp = [cluster[0] for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN]
@@ -356,8 +367,8 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 	# Updates data structures with new universal cluster ids
 
 	for internal_cluster_id in dict_update_cluster.keys():
-		clusters_prev_timestamp[:,-1:][clusters_prev_timestamp[:,-1:]==internal_cluster_id] = dict_update_cluster[internal_cluster_id]
-		clusters_curr_timestamp[:,-1:][clusters_curr_timestamp[:,-1:]==internal_cluster_id] = dict_update_cluster[internal_cluster_id]
+		if clusters_prev_timestamp.size != 0: clusters_prev_timestamp[:,-1:][clusters_prev_timestamp[:,-1:]==internal_cluster_id] = dict_update_cluster[internal_cluster_id]
+		if clusters_curr_timestamp.size != 0: clusters_curr_timestamp[:,-1:][clusters_curr_timestamp[:,-1:]==internal_cluster_id] = dict_update_cluster[internal_cluster_id]
 
 
 	for internal_cluster_id in dict_cluster_prev_timestamp:
