@@ -236,7 +236,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 						#C_LEAVE
 						dict_cluster_prev_timestamp[cluster_prev].append([temp1[i], temp2[i], C_LEAVE])
 					else:
-						#C_IN 
+						#C_OUT 
 						dict_cluster_prev_timestamp[cluster_prev].append([temp1[i], temp2[i], C_OUT])
 		if n_same >= 2:
 			assert(0)
@@ -257,15 +257,15 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 	# IDENTIFY DISPERSE
 	for cluster_prev in dict_cluster_prev_timestamp:
-		n_same = len([1 for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == SAME_P])
-		n_out  = len([1 for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_OUT])
-		if n_same == 0:
-			if n_out == 0:
-				# DISPERSE
-				temp = [traj[0] for traj in dict_cluster_prev_timestamp[cluster_prev] if traj[-1] == T_LEAVE]
-				if len(temp) > 0:
-					dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != T_LEAVE]
-					dict_cluster_prev_timestamp[cluster_prev].append([temp, DISPERSE])
+		n_same   = len([1 for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == SAME_P])
+		n_out    = len([1 for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_OUT])
+		n_split  = len([1 for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == SPLIT])
+		if n_same == 0 and n_out == 0 and n_split == 0:
+			# DISPERSE
+			temp = [traj[0] for traj in dict_cluster_prev_timestamp[cluster_prev] if traj[-1] == T_LEAVE]
+			if len(temp) > 0:
+				dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != T_LEAVE]
+				dict_cluster_prev_timestamp[cluster_prev].append([temp, DISPERSE])
 
 
 
