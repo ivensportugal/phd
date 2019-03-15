@@ -371,7 +371,7 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 		if clusters_curr_timestamp.size != 0: clusters_curr_timestamp[:,-1:][clusters_curr_timestamp[:,-1:]==internal_cluster_id] = dict_update_cluster[internal_cluster_id]
 
 
-	for internal_cluster_id in dict_cluster_prev_timestamp:
+	for internal_cluster_id in dict_cluster_prev_timestamp.keys():
 		# update values first
 		for cluster_id in dict_cluster_prev_timestamp[internal_cluster_id]:
 			if cluster_id[1] in dict_update_cluster.keys():
@@ -382,7 +382,7 @@ def calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clust
 			dict_cluster_prev_timestamp[dict_update_cluster[internal_cluster_id]] = dict_cluster_prev_timestamp.pop(internal_cluster_id)
 
 
-	for internal_cluster_id in dict_cluster_curr_timestamp:
+	for internal_cluster_id in dict_cluster_curr_timestamp.keys():
 		# update values first
 		for cluster_id in dict_cluster_curr_timestamp[internal_cluster_id]:
 			if cluster_id[1] in dict_update_cluster.keys():

@@ -7,7 +7,7 @@ from datetime import datetime
 ''' The main function '''
 def main():
 
-	preprocess()
+	# preprocess()
 	process()
 
 
