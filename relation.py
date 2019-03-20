@@ -24,23 +24,20 @@ T_LEAVE  = 21
 C_IN     = 30
 C_OUT    = 31
 
-C_ENTER  = 40
-C_LEAVE  = 41
+JOIN     = 40
+DETACH   = 41
 
-GROUP    = 50
-DISPERSE = 51
+C_ENTER  = 50
+C_LEAVE  = 51
 
-MERGE    = 60
-SPLIT    = 61
+GROUP    = 60
+DISPERSE = 61
 
-
-
-
-
+MERGE    = 70
+SPLIT    = 71
 
 
-# Relations TEXT
-START_TXT = 'starts'
+
 
 
 # Checks if c1 and c2 are the same cluster according to the minShared percentage
@@ -183,7 +180,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 	# IDENTIFY DISPERSE (0 SAME and 0  C_OUT) (disperse can only be identified after individual trajectories have been added, so that T_LEAVES are updated correctly)
-	# IDENTIFY C_ENTER  (0 SAME and 1  C_OUT)
+	# IDENTIFY JOIN     (0 SAME and 1  C_OUT)
 	# IDENTIFY SPLIT    (0 SAME and 2+ C_OUT and some conditions)
 	# IDENTIFY C_LEAVE  (1 SAME and conditions)
 	for cluster_prev in dict_cluster_prev_timestamp:
@@ -196,11 +193,11 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 				#dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != T_LEAVE]
 				#dict_cluster_prev_timestamp[cluster_prev].append([temp, DISPERSE])
 			if n_out == 1:
-				# C_ENTER
+				# JOIN
 				temp1 = [cluster[0] for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_OUT]
 				temp2 = [cluster[1] for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_OUT]
 				dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != C_OUT]
-				dict_cluster_prev_timestamp[cluster_prev].append([temp1[0], temp2[0], C_ENTER])
+				dict_cluster_prev_timestamp[cluster_prev].append([temp1[0], temp2[0], JOIN])
 			if n_out >= 2:
 				# SPLIT
 				temp1 = [cluster[0] for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_OUT]
@@ -272,7 +269,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 	# IDENTIFY GROUP    (0 SAME and 0  C_IN)
-	# IDENTIFY C_LEAVE  (0 SAME and 1  C_IN)
+	# IDENTIFY DETACH   (0 SAME and 1  C_IN)
 	# IDENTIFY MERGE    (0 SAME and 2+ C_IN and some conditions)
 	# IDENTIFY C_ENTER  (1 SAME and conditions)
 	for cluster_curr in dict_cluster_curr_timestamp:
@@ -286,7 +283,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 					dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != T_ENTER]
 					dict_cluster_curr_timestamp[cluster_curr].append([temp, GROUP])
 			if n_in == 1:
-				# C_LEAVE
+				# DETACH
 				# temp = [cluster[0] for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN]
 				# dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != C_IN]
 				# dict_cluster_curr_timestamp[cluster_curr].append([temp[0], C_LEAVE])
@@ -294,7 +291,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 				temp1 = [cluster[0] for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN]
 				temp2 = [cluster[1] for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN]
 				dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != C_IN]
-				dict_cluster_curr_timestamp[cluster_curr].append([temp1[0], temp2[0], C_LEAVE])
+				dict_cluster_curr_timestamp[cluster_curr].append([temp1[0], temp2[0], DETACH])
 			if n_in >= 2:
 				# MERGE
 				temp1 = [cluster[0] for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN]
@@ -402,7 +399,7 @@ def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, pre
 
 	# Process START relations (group or merge)
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == GROUP or cluster[-1] == MERGE or cluster[-1] == C_LEAVE]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == GROUP or cluster[-1] == MERGE or cluster[-1] == DETACH]
 		if(len(relation) > 0):
 			save_start(cluster_curr, curr_timestamp)
 
@@ -418,11 +415,11 @@ def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, pre
 		if(len(relation) > 0):
 			save_group(cluster_curr, curr_timestamp, relation[0][0])
 
-	# Process C_LEAVE relations (in current)
+	# Process DETACH relations
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_LEAVE]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == DETACH]
 		for r in relation:
-			save_c_leave(cluster_curr, curr_timestamp, r[0], r[1])
+			save_detach(cluster_curr, curr_timestamp, r[0], r[1])
 
 
 
@@ -469,11 +466,11 @@ def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, pre
 
 
 
-	# Process C_ENTER relations (in previous)
+	# Process JOIN relations
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_ENTER]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == JOIN]
 		for r in relation:
-			save_c_enter(cluster_prev, prev_timestamp, r[0], r[1])
+			save_join(cluster_prev, prev_timestamp, r[0], r[1])
 
 	# Process DISPERSE relations
 	for cluster_prev in dict_cluster_prev_timestamp:
@@ -489,7 +486,7 @@ def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, pre
 
 	# Process END relations (group or merge)
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == DISPERSE or cluster[-1] == SPLIT or cluster[-1] == C_ENTER]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == DISPERSE or cluster[-1] == SPLIT or cluster[-1] == JOIN]
 		if(len(relation) > 0):
 			save_end(cluster_prev, prev_timestamp)
 
@@ -539,6 +536,19 @@ def save_group(id, timestamp, trajs):
 
 	path = lifecycle_dir + sid + file_suffix
 	s = sts + ' group(' + t + ', ' + sid + ')'
+
+	save_relation(path, s)
+
+
+def save_detach(id, timestamp, trajs, cluster):
+
+	sid = str(int(id))
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = str([int(traj) for traj in trajs])
+	c = str(int(cluster))
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' detach(' + t + ', ' + c + ', ' + sid + ')' 
 
 	save_relation(path, s)
 
@@ -629,6 +639,19 @@ def save_t_enter(id, timestamp, traj, cluster):
 	c = str(int(cluster))
 	path = lifecycle_dir + sid + file_suffix
 	s = sts + ' t_enter(' + t + ', ' + c + ', ' + sid +')'
+
+	save_relation(path, s)
+
+
+def save_join(id, timestamp, trajs, cluster):
+
+	sid = str(int(id))
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = str([int(traj) for traj in trajs])
+	c = str(int(cluster))
+	path = lifecycle_dir + sid + file_suffix
+	s = sts + ' join(' + t + ', ' + c + ', ' + sid + ')' 
 
 	save_relation(path, s)
 
