@@ -8,3 +8,9 @@ def identify_trajectories(dir):
     if file.endswith(file_suffix):
       files.append(file)
   return files
+
+
+def save_relation(path, s):
+ 	f = open(path, 'a')
+	f.write(s + '\n')
+	f.close()
