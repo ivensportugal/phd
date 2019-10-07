@@ -6,24 +6,38 @@ import geopy.distance
 from constant import eps
 from constant import min_samples
 
-from math import radians, cos, sin, asin, sqrt
+from math import radians, cos, sin, asin, sqrt, pi
+
+from sklearn.neighbors import DistanceMetric
 
 def dbscan(datapoints):
 
-	if(datapoints.shape[0] < 2): return [-1] # cannot cluster a single trajectory
+	if(len(datapoints) < min_samples): return np.negative(np.ones(len(datapoints))) # cannot cluster if the there are less trajectories than the minimum for a cluster
 
-	# db = dbscan_oo(datapoints) # normal DBSCAN
+	# db = dbscan_oo(datapoints) # original DBSCAN
+	db = dbscan_hs(datapoints) # original DBSCAN with original harversine distance (in cython)
 	# db = dbscan_hn(datapoints) # DBSCAN with optimized haversine distance
-	db = dbscan_hd(datapoints) # HDBSCAN
+	# db = dbscan_hd(datapoints) # HDBSCAN
 
 	return db.labels_
 
 
-# The normal DBSCAN
+# The original DBSCAN
 def dbscan_oo(datapoints):
 
 	db = DBSCAN(eps=eps, min_samples=min_samples, metric=dist).fit(datapoints)
 	return db
+
+
+# The original DBSCAN with original harversine distance (in cython)
+def dbscan_hs(datapoints):
+
+	metric   = DistanceMetric.get_metric('haversine')
+	distance = metric.pairwise(np.radians(datapoints)) * 6371000 # Radius of earth in kilometers * 1000 to get meters
+
+	db = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed").fit(distance)
+	return db
+
 
 
 # The DBSCAN algorithm with an optimized Haversine distance
@@ -46,7 +60,7 @@ def dbscan_hn(datapoints):
 
 	distance = haversine_np(lat1, lon1, lat2, lon2).reshape((n,n))
 
-	distance = np.ones(n*n).reshape((n,n))
+	# distance = np.ones(n*n).reshape((n,n))
 
 	db = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed").fit(distance)
 
@@ -56,7 +70,6 @@ def dbscan_hn(datapoints):
 # The HDBSCAN algorithm
 
 def dbscan_hd(datapoints):
-
 	clusterer = hdbscan.HDBSCAN(min_cluster_size=min_samples, metric='haversine', allow_single_cluster=True)
 	clusterer.fit(datapoints)
 	return clusterer
@@ -76,7 +89,7 @@ def dist(coord_i, coord_j):
 	#		great-circle distance (spherical model of Earth)
 	#		vincenty distance (deprecated)
 	# A free implementation of
-	#		harversine (same as great-circle distance?)
+	#		haversine (same as great-circle distance?)
 	#
 	# Sources
 	# https://geopy.readthedocs.io/en/stable/
@@ -87,7 +100,6 @@ def dist(coord_i, coord_j):
 	# return great_circle(coord_i, coord_j)
 	# return vincenty(coord_i, coord_j)
 	# return haversine(coord_i, coord_j)
-	# return test_dist(coord_i, coord_j)
 
 
 
@@ -99,11 +111,6 @@ def great_circle(coord_i, coord_j):
 
 def vincenty(coord_i, coord_j):
 	return geopy.distance.vincenty(coord_i, coord_j).m  # Results are in meters
-
-def test_dist(coord_i, coord_j):
-	return 1
-
-
 
 def haversine(coord_i, coord_j):
 

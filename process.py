@@ -19,30 +19,11 @@ import time
 import ciso8601
 
 
-## Pre process files.
-## Removes microsecond from datestamps
 
-def preprocess():
 
-	trajectories = identify_trajectories(original_dir)
-	for trajectory in trajectories:
 
-		f_original     = open(original_dir     + trajectory, 'r')
-		f_preprocessed = open(preprocessed_dir + trajectory, 'w')
 
-		for line in f_original:
-			
-			datapoint = line.split(',')
-			_id        = datapoint[0]
-			_timestamp = datetime.strptime(datapoint[1], '%Y-%m-%d %H:%M:%S')
-			_lat       = datapoint[3][0:-1] if '\n' in datapoint[3] else datapoint[3]  # removes '\n'
-			_lon       = datapoint[2]
 
-			newline = _id + ',' + _timestamp.strftime('%Y-%m-%d %H:%M:%S') + ',' + _lat + ',' + _lon + '\n'
-			f_preprocessed.write(newline)
-
-		f_original.close()
-		f_preprocessed.close()
 
 
 ## Process trajectories.
@@ -86,15 +67,22 @@ def process():
 		#clusters_curr_timestamp = append_fields(datapoints_valid, 'cid', data = tuple(db), dtypes='i4', usemask=False)
 		#clusters_curr_timestamp['cid'] = (clusters_curr_timestamp['cid']*-1-1)  # so traj without clusters have cluster id zero, internal are negative, external are positive
 
-		datapoints_valid = np.array([(datapoints[i][0], datapoints[i][2], datapoints[i][3]) for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp])
 
-		clusters_curr_timestamp = datapoints_valid[:,1:].copy() # get lats and longs
-		labels = dbscan(clusters_curr_timestamp) # performs dbscan and get labels
-		clusters_curr_timestamp = np.zeros((datapoints_valid.shape[0],datapoints_valid.shape[1]+1)) # adds a column
-		clusters_curr_timestamp[:,:-1] = datapoints_valid
-		clusters_curr_timestamp[:,-1:] = np.array([labels]).transpose()
-		clusters_curr_timestamp[:,-1:] = clusters_curr_timestamp[:,-1:]*-1-1  # so traj without clusters have cluster id zero, internal are negative, external are positive
+		print timeline
 
+
+		datapoints_valid = np.array([(datapoints[i][0], datapoints[i][2], datapoints[i][3]) for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp and timeline - timestamp <= 10*timeline_rate])
+
+
+		clusters_curr_timestamp = []
+		if datapoints_valid != []:
+			clusters_curr_timestamp = datapoints_valid[:,1:].copy() # get lats and longs
+			labels = dbscan(clusters_curr_timestamp) # performs dbscan and get labels
+
+			clusters_curr_timestamp = np.zeros((datapoints_valid.shape[0],datapoints_valid.shape[1]+1)) # adds a column
+			clusters_curr_timestamp[:,:-1] = datapoints_valid
+			clusters_curr_timestamp[:,-1:] = np.array([labels]).transpose()  # add labels as the last column
+			clusters_curr_timestamp[:,-1:] = clusters_curr_timestamp[:,-1:]*-1-1  # so traj without clusters have cluster id zero, internal are negative, external are positive
 
 
 		# Calculate Relations
@@ -127,7 +115,8 @@ def calculate_next_datapoint(traj, tl, tl_rate, prev_datapoint):
 	if prev_datapoint is None: return None
 
 	# Checks if needs to update
-	if prev_datapoint[1] >= tl: return prev_datapoint
+	if prev_datapoint[1] >= tl:
+		return prev_datapoint
 
 	# Tries to update
 	pos = traj.tell()
@@ -155,8 +144,6 @@ def format_datapoint(datapoint):
 	if datapoint == []: return []
 	if datapoint == None: return None
 	return [int(datapoint[0]), ciso8601.parse_datetime(datapoint[1]), float(datapoint[2]), float(datapoint[3])]
-
-
 
 
 

@@ -6,23 +6,24 @@ import sys
 #
 #####
 
+original_dir     = './originals/'
+preprocessed_dir = './preprocessed/' # must be manually created before execution
+lifecycle_dir    = './lifecycle/'    # must be manually created before execution
 
-# Files
-small_original_dir  = './originals/'
-medium_original_dir = './originals_medium/'
-large_original_dir  = './originals_all/'
-test_original_dir   = './originals_test/'
+if len(sys.argv) > 3:
+	original_dir     = sys.argv[1]
+	preprocessed_dir = sys.argv[3]
 
-original_dir     = sys.argv[1]
-preprocessed_dir = sys.argv[3] # 'preprocessed/'
-lifecycle_dir    = 'lifecycle/'
 
 file_suffix = '.txt'
 
 
 # Parameters
-min_cluster = int(sys.argv[2])
+min_cluster = 4
 min_shared  = 0.8
+
+if len(sys.argv) > 3:
+	min_cluster = int(sys.argv[2])
 
 
 # Process
@@ -35,7 +36,7 @@ NO_CLUSTER = 0
 
 
 # DBSCAN
-eps = 200  # (in meters) The maximum distance between two samples for them
+eps = 50  # (in meters) The maximum distance between two samples for them
 					  # to be considered as in the same neighborhood.
 min_samples = min_cluster  # The number of samples (or total weight) in a neighborhood
 													 # for a point to be considered as a core point. This includes the point itself.
