@@ -5,14 +5,9 @@ env/**
 .DS_Store
 
 # Ignore results
-originals/**
-originals_medium/**
-originals_all/**
-originals_test/**
-processed_a/**
-processed_r/**
-preprocessed/**
-lifecycle/**
+originals*/**
+preprocessed*/**
+lifecycle*/**
 
 # Ignore Python compiled files
 *.pyc
