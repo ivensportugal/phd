@@ -79,6 +79,8 @@ def process():
 			clusters_curr_timestamp = datapoints_valid[:,1:].copy() # get lats and longs
 			labels = dbscan(clusters_curr_timestamp) # performs dbscan and get labels
 
+
+
 			clusters_curr_timestamp = np.zeros((datapoints_valid.shape[0],datapoints_valid.shape[1]+1)) # adds a column
 			clusters_curr_timestamp[:,:-1] = datapoints_valid
 			clusters_curr_timestamp[:,-1:] = np.array([labels]).transpose()  # add labels as the last column
@@ -87,6 +89,7 @@ def process():
 
 		# Calculate Relations
 		dict_clusters_prev_timestamp, dict_clusters_curr_timestamp = calc_relations(clusters_prev_timestamp, clusters_curr_timestamp)
+		
 
 		# Assign universal cluster ids and update cluster ids
 		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)

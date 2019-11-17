@@ -1,6 +1,8 @@
+from datetime import datetime
 from constant import original_dir
 from constant import preprocessed_dir
 from file import identify_trajectories
+import time
 
 
 ## Pre process files.
@@ -95,14 +97,61 @@ def preprocess4():
 		for line in f_original:
 
 			datapoint  = line.split(',')
-			_id        = datapoint[8]
-			_timestamp = datapoint[2]
+			_id        = datapoint[8][2:-1]
+			_timestamp = datetime.strptime(datapoint[2], '%Y-%m-%d %H:%M:%S.%f')
 			_lat       = datapoint[4]
 			_lon       = datapoint[3]
 
 			newline = _id + ',' + _timestamp.strftime('%Y-%m-%d %H:%M:%S') + ',' + _lat + ',' + _lon + '\n'
-			print newline
-			a = raw_input()
+			f_preprocessed.write(newline)
+
+		f_original.close()
+		f_preprocessed.close()
+
+
+
+# Proprocess Galapagos Tortoise dataset
+def preprocess5():
+
+	trajectories = identify_trajectories(original_dir)
+	for trajectory in trajectories:
+
+		f_original     = open(original_dir     + trajectory, 'r')
+		f_preprocessed = open(preprocessed_dir + trajectory, 'w')
+
+		for line in f_original:
+
+			datapoint  = line.split(',')
+			_id        = datapoint[37][2:-1]
+			_timestamp = datetime.strptime(datapoint[2], '%Y-%m-%d %H:%M:%S.%f')
+			_lat       = datapoint[4]
+			_lon       = datapoint[3]
+
+			newline = _id + ',' + _timestamp.strftime('%Y-%m-%d %H:%M:%S') + ',' + _lat + ',' + _lon + '\n'
+			f_preprocessed.write(newline)
+
+		f_original.close()
+		f_preprocessed.close()
+
+
+# Proprocess Athens Truck dataset
+def preprocess6():
+
+	trajectories = identify_trajectories(original_dir)
+	for trajectory in trajectories:
+
+		f_original     = open(original_dir     + trajectory, 'r')
+		f_preprocessed = open(preprocessed_dir + trajectory, 'w')
+
+		for line in f_original:
+
+			datapoint  = line.split(';')
+			_id        = datapoint[0]
+			_timestamp = datetime.strptime(datapoint[2] + ' ' + datapoint[3], '%d/%m/%Y %H:%M:%S')
+			_lat       = datapoint[5]
+			_lon       = datapoint[4]
+
+			newline = _id + ',' + _timestamp.strftime('%Y-%m-%d %H:%M:%S') + ',' + _lat + ',' + _lon + '\n'
 			f_preprocessed.write(newline)
 
 		f_original.close()
@@ -111,4 +160,4 @@ def preprocess4():
 
 
 if __name__ == '__main__':
-	preprocess4()
+	preprocess6()

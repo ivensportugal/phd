@@ -3,7 +3,7 @@ clean:
 	rm -f ./lifecycle/*
 
 preprocess:
-	python process.py
+	python preprocess.py
 
 run:
 	python approach.py
