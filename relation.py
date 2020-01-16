@@ -49,6 +49,7 @@ def is_same(c1, c2, c1_leave, c2_enter, common):
 	n_c2_enter = float(len(c2_enter))
 	n_common = float(len(common))
 
+
 	if n_c1      == 0: return False
 	if n_c2      == 0: return False
 	if n_common  == 0: return False
@@ -103,12 +104,6 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
-	# print('-----------------------')
-	# print('dict_clusters_prev_timestamp')
-	# print(dict_clusters_prev_timestamp)
-	# print('dict_clusters_curr_timestamp')
-	# print(dict_clusters_curr_timestamp)
-	# print('-----------------------')
 
 
 
@@ -138,6 +133,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
+
 	# IDENTIFIES SAME, C_ENTER, C_LEAVE
 	# Use individual trajectories to calculate cross temporal cluster similarity and associate clusters
 
@@ -157,6 +153,8 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 			# Associates cluster who share elements
 			# Calculate cross temporal cluster similarity
 			if len (common_traj) > 0:
+
+
 				if is_same(dict_traj_prev_timestamp[cluster_prev], dict_traj_curr_timestamp[cluster_curr], individual_traj_leave[cluster_prev], individual_traj_enter[cluster_curr], common_traj):
 					dict_cluster_prev_timestamp[cluster_prev].append([cluster_curr, SAME_P])
 					dict_cluster_curr_timestamp[cluster_curr].append([cluster_prev, SAME_C])
@@ -260,7 +258,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 		if n_same == 0 and n_out == 0 and n_split == 0:
 			# DISPERSE
 			temp = [traj[0] for traj in dict_cluster_prev_timestamp[cluster_prev] if traj[-1] == T_LEAVE]
-			if len(temp) > 0:
+			if len(temp) >= min_cluster:
 				dict_cluster_prev_timestamp[cluster_prev] = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] != T_LEAVE]
 				dict_cluster_prev_timestamp[cluster_prev].append([temp, DISPERSE])
 
@@ -279,7 +277,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 			if n_in  == 0:
 				# GROUP
 				temp = [traj[0] for traj in dict_cluster_curr_timestamp[cluster_curr] if traj[-1] == T_ENTER]
-				if len(temp) > 0:
+				if len(temp) >= min_cluster:
 					dict_cluster_curr_timestamp[cluster_curr] = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] != T_ENTER]
 					dict_cluster_curr_timestamp[cluster_curr].append([temp, GROUP])
 			if n_in == 1:
