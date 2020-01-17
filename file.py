@@ -9,6 +9,9 @@ def identify_trajectories(dir):
       files.append(file)
   return files
 
+def identify_clusters(dir):
+	return identify_trajectories(dir)
+
 
 def save_relation(path, s):
  	f = open(path, 'a')

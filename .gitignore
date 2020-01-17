@@ -7,7 +7,7 @@ env/**
 # Ignore results
 originals*/**
 preprocessed*/**
-lifecycle*/**
+cluster*/**
 
 # Ignore Python compiled files
 *.pyc

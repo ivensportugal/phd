@@ -6,9 +6,11 @@ import sys
 #
 #####
 
-original_dir     = './originals/'
-preprocessed_dir = './preprocessed/' # must be manually created before execution
-lifecycle_dir    = './lifecycle/'    # must be manually created before execution
+original_dir      = './originals/'
+preprocessed_dir  = './preprocessed/'  # must be manually created before execution
+cluster_dir       = './cluster/'       # must be manually created before execution
+preprocessed2_dir = './preprocessed2/' # must be manually created before execution
+# lifecycle_dir     = './lifecycle/'
 
 if len(sys.argv) > 3:
 	original_dir     = sys.argv[1]
