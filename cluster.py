@@ -22,6 +22,8 @@ def dbscan(datapoints):
 	return db.labels_
 
 
+
+
 # The original DBSCAN
 def dbscan_oo(datapoints):
 
@@ -36,6 +38,7 @@ def dbscan_hs(datapoints):
 	distance = metric.pairwise(np.radians(datapoints)) * 6371000 # Radius of earth in kilometers * 1000 to get meters
 
 	db = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed").fit(distance)
+
 	return db
 
 
