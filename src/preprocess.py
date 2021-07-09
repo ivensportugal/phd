@@ -46,7 +46,7 @@ def preprocess2():
 			
 			datapoint  = line.split(',')
 			_id        = trajectory[0:3]
-			_time      = datapoint[6] if '\n' in datapoint[6] else datapoint[6]  # removes '\n'
+			_time      = datapoint[6][0:-2] if '\n' in datapoint[6] else datapoint[6]  # removes '\n'
 			_timestamp = datetime.strptime(datapoint[5] + ' ' + _time, '%Y-%m-%d %H:%M:%S')
 			_lat       = datapoint[0]
 			_lon       = datapoint[1]
@@ -160,4 +160,4 @@ def preprocess6():
 
 
 if __name__ == '__main__':
-	preprocess6()
+	preprocess2()

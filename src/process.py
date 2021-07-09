@@ -18,8 +18,7 @@ from numpy.lib.recfunctions import append_fields
 import time
 import ciso8601
 
-
-
+from validation import validate
 
 
 
@@ -68,16 +67,36 @@ def process():
 		#clusters_curr_timestamp['cid'] = (clusters_curr_timestamp['cid']*-1-1)  # so traj without clusters have cluster id zero, internal are negative, external are positive
 
 
-		print timeline
+		# print timeline
 
 
 		datapoints_valid = np.array([(datapoints[i][0], datapoints[i][2], datapoints[i][3]) for i, timestamp in enumerate(timestamps) if timestamp != None and timeline >= timestamp and timeline - timestamp <= 10*timeline_rate])
+
+		if datapoints_valid == []:
+			timeline_line = str(timeline) + ',0,0' # time + num_traj + num_clusters
+			# print timeline_line
 
 
 		clusters_curr_timestamp = []
 		if datapoints_valid != []:
 			clusters_curr_timestamp = datapoints_valid[:,1:].copy() # get lats and longs
 			labels = dbscan(clusters_curr_timestamp) # performs dbscan and get labels
+
+			
+
+			uniqui = np.unique(labels)
+			aclusters = uniqui[uniqui >= 0]
+			timeline_line = str(timeline) + ',' + str(len(datapoints_valid)) + ',' + str(len(aclusters))
+			# print timeline_line
+
+
+
+
+################# Validation Tasks #############################
+################################################################
+			validate(clusters_curr_timestamp, labels)
+################################################################
+################################################################
 
 
 
@@ -94,8 +113,10 @@ def process():
 		# Assign universal cluster ids and update cluster ids
 		calc_cluster_id(clusters_prev_timestamp, clusters_curr_timestamp, dict_clusters_prev_timestamp, dict_clusters_curr_timestamp)
 
+
 		# Save Relations
 		save_relations(dict_clusters_prev_timestamp, dict_clusters_curr_timestamp, timeline-timeline_rate, timeline)
+		
 
 
 		# Updates for next iteration: timeline, and cluster list

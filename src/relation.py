@@ -1,7 +1,7 @@
 import constant
 from constant import min_shared
 from constant import min_cluster
-from constant import lifecycle_dir
+from constant import cluster_dir
 from constant import file_suffix
 from constant import NO_CLUSTER
 from file import save_relation
@@ -37,6 +37,64 @@ MERGE    = 70
 SPLIT    = 71
 
 
+# Helper function to 
+
+def relation_to_string(relation):
+
+	if relation == SAME_P  : return 'SAME_P'
+	if relation == SAME_C  : return 'SAME_C'
+
+	if relation == START   : return 'START'
+	if relation == END     : return 'END'
+
+	if relation == T_ENTER : return 'T_ENTER'
+	if relation == T_LEAVE : return 'T_LEAVE'
+
+	if relation == C_IN    : return 'C_IN'
+	if relation == C_OUT   : return 'C_OUT'
+
+	if relation == JOIN    : return 'JOIN'
+	if relation == DETACH  : return 'DETACH'
+
+	if relation == C_ENTER : return 'C_ENTER'
+	if relation == C_LEAVE : return 'C_LEAVE'
+
+	if relation == GROUP   : return 'GROUP'
+	if relation == DISPERSE: return 'DISPERSE'
+
+	if relation == MERGE   : return 'MERGE'
+	if relation == SPLIT   : return 'SPLIT'
+
+
+def string_to_relation(relation):
+
+	relation = relation.upper()
+
+	if relation == 'SAME_P'  : return SAME_P
+	if relation == 'SAME_C'  : return SAME_C
+
+	if relation == 'START'   : return START
+	if relation == 'END'     : return END
+
+	if relation == 'T_ENTER' : return T_ENTER
+	if relation == 'T_LEAVE' : return T_LEAVE
+
+	if relation == 'C_IN'    : return C_IN
+	if relation == 'C_OUT'   : return C_OUT
+
+	if relation == 'JOIN'    : return JOIN
+	if relation == 'DETACH'  : return DETACH
+
+	if relation == 'C_ENTER' : return C_ENTER
+	if relation == 'C_LEAVE' : return C_LEAVE
+
+	if relation == 'GROUP'   : return GROUP
+	if relation == 'DISPERSE': return DISPERSE
+
+	if relation == 'MERGE'   : return MERGE
+	if relation == 'SPLIT'   : return SPLIT
+
+
 
 
 
@@ -66,7 +124,7 @@ def is_same(c1, c2, c1_leave, c2_enter, common):
 
 
 # def save_start(old_id, new_id, timestamp, clusters):
-# 	f = open(lifecycle_dir + new_id + file_suffix, 'w')
+# 	f = open(cluster_dir + new_id + file_suffix, 'w')
 # 	f.write(timestamp + ": " + new_id + " " + START_TXT)
 
 
@@ -494,7 +552,7 @@ def save_start(id, timestamp):
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' start(' + sid + ')'
 
 	save_relation(path, s)
@@ -515,7 +573,7 @@ def save_merge(id, timestamp, trajs, cluster):
 	# 		c += str([int(i) for i in cluster]) + ', '
 	# c = c[:-2] # removes last ', '
 
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' merge(' + t + ', ' + c + ', ' + sid + ')'
 
 	save_relation(path, s)
@@ -532,7 +590,7 @@ def save_group(id, timestamp, trajs):
 	t = str([int(traj) for traj in trajs])
 	# t = t[:-2] # removes last ', '
 
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' group(' + t + ', ' + sid + ')'
 
 	save_relation(path, s)
@@ -545,7 +603,7 @@ def save_detach(id, timestamp, trajs, cluster):
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' detach(' + t + ', ' + c + ', ' + sid + ')' 
 
 	save_relation(path, s)
@@ -558,7 +616,7 @@ def save_t_leave(id, timestamp, traj, cluster):
 
 	t = str(int(traj))
 	c = str(int(cluster))
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' t_leave(' + t + ', ' + c + ', ' + sid +')'
 
 	save_relation(path, s)
@@ -571,7 +629,7 @@ def save_c_leave(id, timestamp, trajs, cluster):
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' c_leave(' + t + ', ' + c + ', ' + sid + ')' 
 
 	save_relation(path, s)
@@ -590,7 +648,7 @@ def save_c_out(id, timestamp, trajs, cluster):
 
 	c = str(int(cluster))
 
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' c_out(' + t + ', ' + c + ', ' + sid + ')'
 
 	save_relation(path, s)
@@ -609,7 +667,7 @@ def save_c_in(id, timestamp, trajs, cluster):
 
 	c = str(int(cluster))
 
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' c_in(' + t + ', ' + c + ', ' + sid + ')'
 
 	save_relation(path, s)
@@ -622,7 +680,7 @@ def save_c_enter(id, timestamp, trajs, cluster):
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' c_enter(' + t + ', ' + c + ', ' + sid + ')' 
 
 	save_relation(path, s)
@@ -635,7 +693,7 @@ def save_t_enter(id, timestamp, traj, cluster):
 
 	t = str(int(traj))
 	c = str(int(cluster))
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' t_enter(' + t + ', ' + c + ', ' + sid +')'
 
 	save_relation(path, s)
@@ -648,7 +706,7 @@ def save_join(id, timestamp, trajs, cluster):
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' join(' + t + ', ' + c + ', ' + sid + ')' 
 
 	save_relation(path, s)
@@ -665,7 +723,7 @@ def save_disperse(id, timestamp, trajs):
 	# 	t += str(int(traj)) + ', '
 	# t = t[:-2] # removes last ', '
 
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' disperse(' + t + ', ' + sid + ')'
 
 	save_relation(path, s)
@@ -688,7 +746,7 @@ def save_split(id, timestamp, trajs, cluster):
 	# 		c += str([int(i) for i in cluster]) + ', '
 	# c = c[:-2] # removes last ', '
 
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	# s = sts + ' split(' + c + ', ' + sid + ')'
 	s = sts + ' split(' + t + ', ' + c + ', ' + sid + ')'
 
@@ -700,7 +758,7 @@ def save_end(id, timestamp):
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
-	path = lifecycle_dir + sid + file_suffix
+	path = cluster_dir + sid + file_suffix
 	s = sts + ' end(' + sid + ')'
 
 	save_relation(path, s)

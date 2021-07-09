@@ -1,6 +1,6 @@
 clean:
-	rm -f ./preprocessed/*
-	rm -f ./lifecycle/*
+	rm -f ../process/preprocessed/*
+	rm -f ../process/lifecycle/*
 
 preprocess:
 	python preprocess.py
@@ -11,8 +11,8 @@ run:
 test:
 # 	make clean
 # 	time python approach.py ./test2/ 3 preprocessed_2/
-	make clean
-	time python approach.py ./test10/ 3 preprocessed_10/
+# 	make clean
+# 	time python approach.py ./test10/ 3 preprocessed_10/
 # 	make clean
 # 	time python approach.py ./test30/ 3 preprocessed_30/
 # 	make clean
