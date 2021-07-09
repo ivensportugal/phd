@@ -1,13 +1,11 @@
-# Ignore the virtual environment
-env/**
+# Ignore some folders
+casestudies/*
+data/*
+env*/*
+process/*
 
 # Apple configuration
 .DS_Store
 
-# Ignore results
-originals*/**
-preprocessed*/**
-lifecycle*/**
-
 # Ignore Python compiled files
-*.pyc
+src/*.pyc
