@@ -71,13 +71,18 @@ def preprocess3():
 
 			datapoint  = line.split(';')
 			_id        = datapoint[0]
-			_timestamp = datetime.strptime(datapoint[1], '%Y-%m-%d %H:%M:%S.%f+01')
+			_timestamp = ""
+			try:
+				_timestamp = datetime.strptime(datapoint[1], '%Y-%m-%d %H:%M:%S.%f+01')
+			except ValueError:
+				_timestamp = datetime.strptime(datapoint[1], '%Y-%m-%d %H:%M:%S+01')
 			_point     = datapoint[2][6:-2].split(' ')
 			_lat       = _point[0]
 			_lon       = _point[1]
 
 			newline = _id + ',' + _timestamp.strftime('%Y-%m-%d %H:%M:%S') + ',' + _lat + ',' + _lon + '\n'
 			f_preprocessed.write(newline)
+			# print newline
 
 		f_original.close()
 		f_preprocessed.close()
@@ -160,4 +165,4 @@ def preprocess6():
 
 
 if __name__ == '__main__':
-	preprocess2()
+	preprocess3()
