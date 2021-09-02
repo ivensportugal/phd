@@ -10,7 +10,7 @@ import time
 
 
 # Preprocess Microsoft Taxi dataset
-def preprocess():
+def preprocessMicrosoftTaxi():
 
 	trajectories = identify_trajectories(original_dir)
 	for trajectory in trajectories:
@@ -34,7 +34,7 @@ def preprocess():
 
 
 # Preprocess GeoLife dataset
-def preprocess2():
+def preprocessGeoLife():
 
 	trajectories = identify_trajectories(original_dir)
 	for trajectory in trajectories:
@@ -59,7 +59,7 @@ def preprocess2():
 
 
 # Preprocess Rome Taxi dataset
-def preprocess3():
+def preprocessRomeTaxi():
 
 	trajectories = identify_trajectories(original_dir)
 	for trajectory in trajectories:
@@ -90,8 +90,8 @@ def preprocess3():
 
 
 
-# Proprocess Patagonia Sheep dataset
-def preprocess4():
+# Preprocess Patagonia Sheep dataset
+def preprocessPatagoniaSheep():
 
 	trajectories = identify_trajectories(original_dir)
 	for trajectory in trajectories:
@@ -115,8 +115,8 @@ def preprocess4():
 
 
 
-# Proprocess Galapagos Tortoise dataset
-def preprocess5():
+# Preprocess Galapagos Tortoise dataset
+def preprocessGalapagosTortoise():
 
 	trajectories = identify_trajectories(original_dir)
 	for trajectory in trajectories:
@@ -139,8 +139,8 @@ def preprocess5():
 		f_preprocessed.close()
 
 
-# Proprocess Athens Truck dataset
-def preprocess6():
+# Preprocess Athens Truck dataset
+def preprocessAthensTruck():
 
 	trajectories = identify_trajectories(original_dir)
 	for trajectory in trajectories:
@@ -165,4 +165,10 @@ def preprocess6():
 
 
 if __name__ == '__main__':
-	preprocess3()
+
+	# preprocessMicrosoftTaxi()
+	# preprocessGeoLife()
+	# preprocessRomeTaxi()
+	# preprocessPatagoniaSheep()
+	# preprocessGalapagosTortoise()
+	# preprocessAthensTruck()
