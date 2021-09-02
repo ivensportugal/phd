@@ -163,6 +163,27 @@ def preprocessAthensTruck():
 		f_preprocessed.close()
 
 
+# Preprocess CabSpotting dataset
+def preprocessCabSpotting():
+
+
+# Preprocess T-Drive dataset
+def preprocessTDrive():
+
+
+# PreprocessShuttleChicago dataset
+def preprocessShuttleChicago():
+
+
+# Preprocess SeattleBus dataset
+def preprocessSeattleBus():
+
+
+# Preprocess RioBus dataset
+def preprocessRioBus():
+
+
+
 
 if __name__ == '__main__':
 
@@ -172,3 +193,8 @@ if __name__ == '__main__':
 	# preprocessPatagoniaSheep()
 	# preprocessGalapagosTortoise()
 	# preprocessAthensTruck()
+	# processCabSpotting()
+	# preprocessTDrive()
+	# preprocessShuttleChicago()
+	# preprocessSeattleBus()
+	# preprocessRioBus()
