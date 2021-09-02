@@ -203,7 +203,7 @@ def preprocessCabSpotting():
 
 if __name__ == '__main__':
 
-	# preprocessTDrive()
+	preprocessTDrive()
 	# preprocessGeoLife()
 	# preprocessRomeTaxi()
 	# preprocessPatagoniaSheep()
