@@ -76,8 +76,10 @@ def preprocess_neo4j():
 			size                   = size + contribution
 			supporting_cluster_id  = parse_supporting_cluster_id(event, line)
 
+
 			nodes = parse_nodes(cluster_id, size-contribution, size, timestamp, event, event_cache, timestamp_cache)
 			edges = parse_edges(cluster_id, supporting_cluster_id, timestamp, event)
+
 
 			write_nodes(nodes, f_nodes)
 			write_edges(edges, f_edges)
@@ -85,6 +87,7 @@ def preprocess_neo4j():
 			continues = parse_continues(cluster_id, timestamp, timeline, event)
 			write_continues(continues, f_edges)
 
+			size = update_size(size, contribution, event)
 			timeline = update_timeline(timestamp, event)
 			event_cache = event
 			timestamp_cache = timestamp
@@ -509,6 +512,12 @@ def update_timeline(timestamp, event):
 	
 	if  event == MERGE:     return timestamp
 	if  event == SPLIT:     return timestamp + timedelta(minutes=rate)
+
+
+
+def update_size(size, contribution, event):
+	if  event == SPLIT: return size - contribution
+	return size
 
 
 
