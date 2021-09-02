@@ -9,8 +9,8 @@ import time
 ## Removes microsecond from datestamps
 
 
-# Preprocess Microsoft Taxi dataset
-def preprocessMicrosoftTaxi():
+# Preprocess TDrive dataset
+def preprocessTDrive():
 
 	trajectories = identify_trajectories(original_dir)
 	for trajectory in trajectories:
@@ -166,35 +166,50 @@ def preprocessAthensTruck():
 # Preprocess CabSpotting dataset
 def preprocessCabSpotting():
 
+	trajectories = identify_trajectories(original_dir)
+	for i, trajectory in enumerate(trajectories):
 
-# Preprocess T-Drive dataset
-def preprocessTDrive():
+		f_original     = open(original_dir     +      trajectory, 'r')
+		f_preprocessed = open(preprocessed_dir + str(i+1)+'.txt', 'w')
+
+		for line in f_original:
+			
+			datapoint  = line.split(' ')
+			_id        = str(i+1)
+			_timestamp = datetime.fromtimestamp(float(datapoint[3][0:-1]) if '\n' in datapoint[3] else float(datapoint[3]))  # removes '\n'
+			_lat       = datapoint[0]
+			_lon       = datapoint[1]
+
+			newline = _id + ',' + _timestamp.strftime('%Y-%m-%d %H:%M:%S') + ',' + _lat + ',' + _lon + '\n'
+			f_preprocessed.write(newline)
+
+		f_original.close()
+		f_preprocessed.close()
 
 
 # PreprocessShuttleChicago dataset
-def preprocessShuttleChicago():
+# def preprocessShuttleChicago():
 
 
 # Preprocess SeattleBus dataset
-def preprocessSeattleBus():
+# def preprocessSeattleBus():
 
 
 # Preprocess RioBus dataset
-def preprocessRioBus():
+# def preprocessRioBus():
 
 
 
 
 if __name__ == '__main__':
 
-	# preprocessMicrosoftTaxi()
+	# preprocessTDrive()
 	# preprocessGeoLife()
 	# preprocessRomeTaxi()
 	# preprocessPatagoniaSheep()
 	# preprocessGalapagosTortoise()
 	# preprocessAthensTruck()
-	# processCabSpotting()
-	# preprocessTDrive()
+	# preprocessCabSpotting()
 	# preprocessShuttleChicago()
 	# preprocessSeattleBus()
 	# preprocessRioBus()
