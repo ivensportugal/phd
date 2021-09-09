@@ -4,6 +4,10 @@ from constant import preprocessed_dir
 from file import identify_trajectories
 import time
 
+from file import create_folder
+from file import delete_folder
+from constant import file_suffix
+
 
 ## Pre process files.
 ## Removes microsecond from datestamps
@@ -196,20 +200,68 @@ def preprocessCabSpotting():
 
 
 # Preprocess RioBus dataset
-# def preprocessRioBus():
+def preprocessRioBus():
+
+	# Handles scattered buses
+	temp_dir = original_dir + 'temp/'
+	create_folder(temp_dir)
+
+	trajectories = identify_trajectories(original_dir)
+	for trajectory in trajectories:
+
+		f_original = open(original_dir + trajectory, 'r')
+
+		for line in f_original:
+
+			datapoint = line.split(',')
+			bus_id    = datapoint[2]
+
+			f_temp = open(temp_dir + bus_id + file_suffix, 'a')
+			f_temp.write(line)
+			f_temp.close()
+
+		print('closing ' + trajectory)
+		f_original.close()
+
+
+
+
+	# Preprocesses Buses
+	trajectories = identify_trajectories(temp_dir)
+	for i, trajectory in enumerate(trajectories):
+
+		f_original     = open(temp_dir     +      trajectory, 'r')
+		f_preprocessed = open(preprocessed_dir + str(i+1) + file_suffix, 'w')
+
+		for line in f_original:
+			
+			datapoint  = line.split(',')
+			_date      = datapoint[0]
+			_time      = datapoint[1]
+			_timestamp = datetime.strptime(_date + ' ' + _time, '%Y-%m-%d %H:%M:%S')
+			_lat       = datapoint[4]
+			_lon       = datapoint[5] [0:-1] if '\n' in datapoint[5] else datapoint[5]  # removes '\n'
+
+			newline = _id + ',' + _timestamp.strftime('%Y-%m-%d %H:%M:%S') + ',' + _lat + ',' + _lon + '\n'
+			f_preprocessed.write(newline)
+
+		f_original.close()
+		f_preprocessed.close()
+
+	delete_folder(temp_dir)
 
 
 
 
 if __name__ == '__main__':
 
-	preprocessTDrive()
+	# preprocessTDrive()
 	# preprocessGeoLife()
 	# preprocessRomeTaxi()
 	# preprocessPatagoniaSheep()
 	# preprocessGalapagosTortoise()
 	# preprocessAthensTruck()
-	# preprocessCabSpotting()
+	preprocessCabSpotting()
 	# preprocessShuttleChicago()
 	# preprocessSeattleBus()
 	# preprocessRioBus()
