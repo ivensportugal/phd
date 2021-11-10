@@ -50,7 +50,7 @@ EDGES_HEADER = 'clusterIdBefore,clusterIdAfter,timestampBefore,timestampAfter,cl
 
 
 # DBSCAN
-eps = 50  # (in meters) The maximum distance between two samples for them
+eps = 40  # (in meters) The maximum distance between two samples for them
 					  	# to be considered as in the same neighborhood.
 min_samples = min_cluster # The number of samples (or total weight) in a neighborhood
 							# for a point to be considered as a core point. This includes the point itself.

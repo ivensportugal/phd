@@ -13,7 +13,7 @@ def main():
 # Common Processing
 	# clusters
 	# preprocess()
-	process()
+	# process()
 
 # Processing for Lifecycle
 	# lifecycle

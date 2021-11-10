@@ -53,7 +53,6 @@ def preprocess_neo4j():
 	for cluster in clusters:
 
 		f_cluster = open(cluster_dir + cluster, 'r')
-
 		cluster_id = parse_cluster_id(cluster)
 
 		# helps identify relations where nothing has happened (relation SAME or CONTINUE)
@@ -79,7 +78,6 @@ def preprocess_neo4j():
 
 			nodes = parse_nodes(cluster_id, size-contribution, size, timestamp, event, event_cache, timestamp_cache)
 			edges = parse_edges(cluster_id, supporting_cluster_id, timestamp, event)
-
 
 			write_nodes(nodes, f_nodes)
 			write_edges(edges, f_edges)
@@ -408,9 +406,21 @@ def parse_nodes(nodeId, nodeSizeBefore, nodeSizeAfter, timestamp, event, event_c
 			return [parse_node(nodeId, nodeSizeBefore, timestamp), parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
 		else:
 			return [parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
+
+	if  event == C_IN:
+		if (timestamp != timestamp_cache):
+			return [parse_node(nodeId, nodeSizeBefore, (timestamp - timedelta(minutes=rate))), parse_node(nodeId, nodeSizeAfter, timestamp)]
+		else:
+			return [parse_node(nodeId, nodeSizeAfter, timestamp)]
+	if  event == C_OUT:
+		if (timestamp != timestamp_cache - timedelta(minutes=rate)):
+			return [parse_node(nodeId, nodeSizeBefore, timestamp), parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
+		else:
+			return [parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
 	
 	if  event == MERGE:     return [parse_node(nodeId, nodeSizeAfter, timestamp)]
 	if  event == SPLIT:     return [parse_node(nodeId, nodeSizeBefore, timestamp)]
+
 
 
 
@@ -432,6 +442,9 @@ def parse_edges(nodeId, supportingNodeId, timestamp, event):
 
 	if  event == C_ENTER:   return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event))]
 	if  event == C_LEAVE:   return [parse_edge(nodeId, nodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event))]
+
+	if  event == C_IN:      return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event))]
+	if  event == C_OUT:     return [parse_edge(nodeId, nodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event))]
 	
 	if  event == MERGE:     return [parse_edge(supportingNodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event))]
 	if  event == SPLIT:     return [parse_edge(nodeId, supportingNodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event))]
@@ -509,6 +522,9 @@ def update_timeline(timestamp, event):
 
 	if  event == C_ENTER:   return timestamp
 	if  event == C_LEAVE:   return timestamp + timedelta(minutes=rate)
+
+	if event == C_IN:       return timestamp
+	if event == C_OUT:      return timestamp + timedelta(minutes=rate)
 	
 	if  event == MERGE:     return timestamp
 	if  event == SPLIT:     return timestamp + timedelta(minutes=rate)
