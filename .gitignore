@@ -3,6 +3,7 @@ casestudies/*
 data/*
 env*/*
 process/*
+scripts/*
 
 # Apple configuration
 .DS_Store
