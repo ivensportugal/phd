@@ -99,20 +99,22 @@ def string_to_relation(relation):
 
 
 # Checks if c1 and c2 are the same cluster according to the minShared percentage
-def is_same(c1, c2, c1_leave, c2_enter, common):
+def is_same(c1, c2, c1_leave, c2_enter, c1_leave_c, c2_enter_c, common):
 
 	n_c1 = float(len(c1))
 	n_c2 = float(len(c2))
 	n_c1_leave = float(len(c1_leave))
 	n_c2_enter = float(len(c2_enter))
+	n_c1_leave_c = float(len(c1_leave_c))
+	n_c2_enter_c = float(len(c2_enter_c))
 	n_common = float(len(common))
 
 
 	if n_c1      == 0: return False
 	if n_c2      == 0: return False
-	if n_common  == 0: return False
+	if n_common  < min_cluster: return False
 
-	if n_common / (n_c1 - n_c1_leave) >= min_shared and n_common / (n_c2 - n_c2_enter) >= min_shared:
+	if n_common / (n_c1 - n_c1_leave - n_c1_leave_c) >= min_shared and n_common / (n_c2 - n_c2_enter - n_c2_enter_c) >= min_shared:
 		return True
 	else:
 		return False
@@ -190,6 +192,22 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 
 
 
+	# Identifies trajectories that
+	#  - leave the cluster in the previous timestamp
+	#  - enter the cluster in the current timestamp
+	# These clusters are remove from cross-temporal cluster similarity calculation
+
+	cluster_traj_leave = {k: [] for k in dict_traj_prev_timestamp}
+	cluster_traj_enter = {k: [] for k in dict_traj_curr_timestamp}
+
+	for cluster_prev in dict_traj_prev_timestamp:
+		for cluster_curr in dict_traj_curr_timestamp:
+			common_traj = [traj for traj in dict_traj_prev_timestamp[cluster_prev] if traj in dict_traj_curr_timestamp[cluster_curr]]
+			if len(common_traj) < min_cluster:
+				cluster_traj_leave[cluster_prev] += common_traj
+				cluster_traj_enter[cluster_curr] += common_traj
+
+
 
 
 	# IDENTIFIES SAME, C_ENTER, C_LEAVE
@@ -213,7 +231,7 @@ def calc_relations(clusters_prev_timestamp, clusters_curr_timestamp):
 			if len (common_traj) > 0:
 
 
-				if is_same(dict_traj_prev_timestamp[cluster_prev], dict_traj_curr_timestamp[cluster_curr], individual_traj_leave[cluster_prev], individual_traj_enter[cluster_curr], common_traj):
+				if is_same(dict_traj_prev_timestamp[cluster_prev], dict_traj_curr_timestamp[cluster_curr], individual_traj_leave[cluster_prev], individual_traj_enter[cluster_curr], cluster_traj_leave[cluster_prev], cluster_traj_enter[cluster_curr], common_traj):
 					dict_cluster_prev_timestamp[cluster_prev].append([cluster_curr, SAME_P])
 					dict_cluster_curr_timestamp[cluster_curr].append([cluster_prev, SAME_C])
 				else:
@@ -455,310 +473,311 @@ def save_relations(dict_cluster_prev_timestamp, dict_cluster_curr_timestamp, pre
 
 	# Process START relations (group or merge)
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == GROUP or cluster[-1] == MERGE or cluster[-1] == DETACH]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr][0] if cluster[-1] == GROUP or cluster[-1] == MERGE or cluster[-1] == DETACH]
 		if(len(relation) > 0):
-			save_start(cluster_curr, curr_timestamp)
+			coordinates = dict_cluster_curr_timestamp[cluster_curr][1]
+			save_start(cluster_curr, curr_timestamp, coordinates)
 
 	# Process MERGE relations
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == MERGE]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr][0] if cluster[-1] == MERGE]
 		for r in relation:
-			save_merge(cluster_curr, curr_timestamp, r[0], r[1])
+			coordinates = dict_cluster_curr_timestamp[cluster_curr][1]
+			save_merge(cluster_curr, curr_timestamp, r[0], r[1], coordinates)
 
 	# Process GROUP relations
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == GROUP]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr][0] if cluster[-1] == GROUP]
 		if(len(relation) > 0):
-			save_group(cluster_curr, curr_timestamp, relation[0][0])
+			coordinates = dict_cluster_curr_timestamp[cluster_curr][1]
+			save_group(cluster_curr, curr_timestamp, relation[0][0], coordinates)
 
 	# Process DETACH relations
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == DETACH]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr][0] if cluster[-1] == DETACH]
 		for r in relation:
-			save_detach(cluster_curr, curr_timestamp, r[0], r[1])
+			coordinates = dict_cluster_curr_timestamp[cluster_curr][1]
+			save_detach(cluster_curr, curr_timestamp, r[0], r[1], coordinates)
 
 
 
 
 	# Process T_LEAVE relations
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == T_LEAVE]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev][0] if cluster[-1] == T_LEAVE]
 		for r in relation:
-			save_t_leave(cluster_prev, prev_timestamp, r[0], r[1])
+			coordinates = dict_cluster_prev_timestamp[cluster_prev][1]
+			save_t_leave(cluster_prev, prev_timestamp, r[0], r[1], coordinates)
 
 	# Process C_LEAVE relations
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_LEAVE]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev][0] if cluster[-1] == C_LEAVE]
 		for r in relation:
-			save_c_leave(cluster_prev, prev_timestamp, r[0], r[1])
+			coordinates = dict_cluster_prev_timestamp[cluster_prev][1]
+			save_c_leave(cluster_prev, prev_timestamp, r[0], r[1], coordinates)
 
 	# Process C_OUT relations
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == C_OUT]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev][0] if cluster[-1] == C_OUT]
 		for r in relation:
-			save_c_out(cluster_prev, prev_timestamp, r[0], r[1])
+			coordinates = dict_cluster_prev_timestamp[cluster_prev][1]
+			save_c_out(cluster_prev, prev_timestamp, r[0], r[1], coordinates)
 
 
 
 
 	# Process C_IN relations
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_IN]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr][0] if cluster[-1] == C_IN]
 		for r in relation:
-			save_c_in(cluster_curr, curr_timestamp, r[0], r[1])
+			coordinates = dict_cluster_curr_timestamp[cluster_curr][1]
+			save_c_in(cluster_curr, curr_timestamp, r[0], r[1], coordinates)
 
 	# Process C_ENTER relations
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == C_ENTER]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr][0] if cluster[-1] == C_ENTER]
 		for r in relation:
-			save_c_enter(cluster_curr, curr_timestamp, r[0], r[1])
+			coordinates = dict_cluster_curr_timestamp[cluster_curr][1]
+			save_c_enter(cluster_curr, curr_timestamp, r[0], r[1], coordinates)
 
 	# Process T_ENTER relations
 	for cluster_curr in dict_cluster_curr_timestamp:
-		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr] if cluster[-1] == T_ENTER]
+		relation = [cluster for cluster in dict_cluster_curr_timestamp[cluster_curr][0] if cluster[-1] == T_ENTER]
 		for r in relation:
-			save_t_enter(cluster_curr, curr_timestamp, r[0], r[1])
+			coordinates = dict_cluster_curr_timestamp[cluster_curr][1]
+			save_t_enter(cluster_curr, curr_timestamp, r[0], r[1], coordinates)
 
 
 
 
 	# Process JOIN relations
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == JOIN]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev][0] if cluster[-1] == JOIN]
 		for r in relation:
-			save_join(cluster_prev, prev_timestamp, r[0], r[1])
+			coordinates = dict_cluster_prev_timestamp[cluster_prev][1]
+			save_join(cluster_prev, prev_timestamp, r[0], r[1], coordinates)
 
 	# Process DISPERSE relations
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == DISPERSE]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev][0] if cluster[-1] == DISPERSE]
 		if(len(relation) > 0):
-			save_disperse(cluster_prev, prev_timestamp, relation[0][0])
+			coordinates = dict_cluster_prev_timestamp[cluster_prev][1]
+			save_disperse(cluster_prev, prev_timestamp, relation[0][0], coordinates)
 
 	# Process SPLIT relations
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == SPLIT]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev][0] if cluster[-1] == SPLIT]
 		for r in relation:
-			save_split(cluster_prev, prev_timestamp, r[0], r[1])
+			coordinates = dict_cluster_prev_timestamp[cluster_prev][1]
+			save_split(cluster_prev, prev_timestamp, r[0], r[1], coordinates)
 
 	# Process END relations (group or merge)
 	for cluster_prev in dict_cluster_prev_timestamp:
-		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev] if cluster[-1] == DISPERSE or cluster[-1] == SPLIT or cluster[-1] == JOIN]
+		relation = [cluster for cluster in dict_cluster_prev_timestamp[cluster_prev][0] if cluster[-1] == DISPERSE or cluster[-1] == SPLIT or cluster[-1] == JOIN]
 		if(len(relation) > 0):
-			save_end(cluster_prev, prev_timestamp)
+			coordinates = dict_cluster_prev_timestamp[cluster_prev][1]
+			save_end(cluster_prev, prev_timestamp, coordinates)
 
 
-def save_start(id, timestamp):
-
-	sid = str(int(id))
-	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-	path = cluster_dir + sid + file_suffix
-	s = sts + ' start(' + sid + ')'
-
-	save_relation(path, s)
-
-
-def save_merge(id, timestamp, trajs, cluster):
+def save_start(id, timestamp, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
-	t = str([int(traj) for traj in trajs])
-	c = str(int(cluster))
-	# c = ''
-	# for cluster in clusters:
-	# 	if type(cluster) != list:
-	# 		c += str(int(cluster)) + ', '
-	# 	else:
-	# 		c += str([int(i) for i in cluster]) + ', '
-	# c = c[:-2] # removes last ', '
+	l = ' '.join('%010.6f'%n for n in coordinates)
 
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' merge(' + t + ', ' + c + ', ' + sid + ')'
+	s = sts + ' ' + l + ' start(' + sid + ')'
 
 	save_relation(path, s)
 
 
-def save_group(id, timestamp, trajs):
-
-	sid = str(int(id))
-	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-	# t = ''
-	# for traj in trajs:
-	# 	t += str(int(traj)) + ', '
-	t = str([int(traj) for traj in trajs])
-	# t = t[:-2] # removes last ', '
-
-	path = cluster_dir + sid + file_suffix
-	s = sts + ' group(' + t + ', ' + sid + ')'
-
-	save_relation(path, s)
-
-
-def save_detach(id, timestamp, trajs, cluster):
+def save_merge(id, timestamp, trajs, cluster, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' detach(' + t + ', ' + c + ', ' + sid + ')' 
+	s = sts + ' ' + l + ' merge(' + t + ', ' + c + ', ' + sid + ')'
 
 	save_relation(path, s)
 
 
-def save_t_leave(id, timestamp, traj, cluster):
+def save_group(id, timestamp, trajs, coordinates):
+
+	sid = str(int(id))
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = str([int(traj) for traj in trajs])
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
+	path = cluster_dir + sid + file_suffix
+	s = sts + ' ' + l + ' group(' + t + ', ' + sid + ')'
+
+	save_relation(path, s)
+
+
+def save_detach(id, timestamp, trajs, cluster, coordinates):
+
+	sid = str(int(id))
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = str([int(traj) for traj in trajs])
+	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
+	path = cluster_dir + sid + file_suffix
+	s = sts + ' ' + l + ' detach(' + t + ', ' + c + ', ' + sid + ')'
+
+	save_relation(path, s)
+
+
+def save_t_leave(id, timestamp, traj, cluster, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
 	t = str(int(traj))
 	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' t_leave(' + t + ', ' + c + ', ' + sid +')'
+	s = sts + ' ' + l + ' t_leave(' + t + ', ' + c + ', ' + sid +')'
 
 	save_relation(path, s)
 
 
-def save_c_leave(id, timestamp, trajs, cluster):
+def save_c_leave(id, timestamp, trajs, cluster, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' c_leave(' + t + ', ' + c + ', ' + sid + ')' 
+	s = sts + ' ' + l + ' c_leave(' + t + ', ' + c + ', ' + sid + ')'
 
 	save_relation(path, s)
 
 
-def save_c_out(id, timestamp, trajs, cluster):
-
-	sid = str(int(id))
-	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-	# t = ''
-	# for traj in trajs:
-	# 	t += str(int(traj)) + ', '
-	t = str([int(traj) for traj in trajs])
-	# t = t[:-2] # removes last ', '
-
-	c = str(int(cluster))
-
-	path = cluster_dir + sid + file_suffix
-	s = sts + ' c_out(' + t + ', ' + c + ', ' + sid + ')'
-
-	save_relation(path, s)
-
-
-def save_c_in(id, timestamp, trajs, cluster):
-
-	sid = str(int(id))
-	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-	t = str([int(traj) for traj in trajs])
-	# t = ''
-	# for traj in trajs:
-	# 	t += str(int(traj)) + ', '
-	# t = t[:-2] # removes last ', '
-
-	c = str(int(cluster))
-
-	path = cluster_dir + sid + file_suffix
-	s = sts + ' c_in(' + t + ', ' + c + ', ' + sid + ')'
-
-	save_relation(path, s)
-
-
-def save_c_enter(id, timestamp, trajs, cluster):
+def save_c_out(id, timestamp, trajs, cluster, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' c_enter(' + t + ', ' + c + ', ' + sid + ')' 
+	s = sts + ' ' + l + ' c_out(' + t + ', ' + c + ', ' + sid + ')'
 
 	save_relation(path, s)
 
 
-def save_t_enter(id, timestamp, traj, cluster):
+def save_c_in(id, timestamp, trajs, cluster, coordinates):
+
+	sid = str(int(id))
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = str([int(traj) for traj in trajs])
+	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
+	path = cluster_dir + sid + file_suffix
+	s = sts + ' ' + l + ' c_in(' + t + ', ' + c + ', ' + sid + ')'
+
+	save_relation(path, s)
+
+
+def save_c_enter(id, timestamp, trajs, cluster, coordinates):
+
+	sid = str(int(id))
+	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+	t = str([int(traj) for traj in trajs])
+	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
+	path = cluster_dir + sid + file_suffix
+	s = sts + ' ' + l + ' c_enter(' + t + ', ' + c + ', ' + sid + ')'
+
+	save_relation(path, s)
+
+
+def save_t_enter(id, timestamp, traj, cluster, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
 	t = str(int(traj))
 	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' t_enter(' + t + ', ' + c + ', ' + sid +')'
+	s = sts + ' ' + l + ' t_enter(' + t + ', ' + c + ', ' + sid +')'
 
 	save_relation(path, s)
 
 
-def save_join(id, timestamp, trajs, cluster):
+def save_join(id, timestamp, trajs, cluster, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' join(' + t + ', ' + c + ', ' + sid + ')' 
+	s = sts + ' ' + l + ' join(' + t + ', ' + c + ', ' + sid + ')'
 
 	save_relation(path, s)
 
 
-def save_disperse(id, timestamp, trajs):
+def save_disperse(id, timestamp, trajs, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
 	t = str([int(traj) for traj in trajs])
-	# t = ''
-	# for traj in trajs:
-	# 	t += str(int(traj)) + ', '
-	# t = t[:-2] # removes last ', '
+	l = ' '.join('%010.6f'%n for n in coordinates)
 
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' disperse(' + t + ', ' + sid + ')'
+	s = sts + ' ' + l + ' disperse(' + t + ', ' + sid + ')'
 
 	save_relation(path, s)
 
 
-def save_split(id, timestamp, trajs, cluster):
+def save_split(id, timestamp, trajs, cluster, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
 
 	t = str([int(traj) for traj in trajs])
 	c = str(int(cluster))
-	# c = str([int(cluster) if type(cluster) != list else [int(i) for i in cluster] for cluster in clusters])
-	# c = ''
-	# for cluster in clusters:
-	# 	if type(cluster) != list:
-	# 		c += str(int(cluster)) + ', '
-	# 	else:
-	# 		c += str([int(i) for i in cluster]) + ', '
-	# c = c[:-2] # removes last ', '
+	l = ' '.join('%010.6f'%n for n in coordinates)
 
 	path = cluster_dir + sid + file_suffix
-	# s = sts + ' split(' + c + ', ' + sid + ')'
-	s = sts + ' split(' + t + ', ' + c + ', ' + sid + ')'
+	s = sts + ' ' + l + ' split(' + t + ', ' + c + ', ' + sid + ')'
 
 	save_relation(path, s)
 
 
-def save_end(id, timestamp):
+def save_end(id, timestamp, coordinates):
 
 	sid = str(int(id))
 	sts = timestamp.strftime('%Y-%m-%d %H:%M:%S')
 
+	l = ' '.join('%010.6f'%n for n in coordinates)
+
 	path = cluster_dir + sid + file_suffix
-	s = sts + ' end(' + sid + ')'
+	s = sts + ' ' + l + ' end(' + sid + ')'
 
 	save_relation(path, s)

@@ -55,14 +55,30 @@ def preprocess_neo4j():
 		f_cluster = open(cluster_dir + cluster, 'r')
 		cluster_id = parse_cluster_id(cluster)
 
-		# helps identify relations where nothing has happened (relation SAME or CONTINUE)
-		timeline = ''
+		# helps identify relationships where nothing has happened (relationship SAME or CONTINUE)
+		# helps identify relationships that happen at the same time a start or end relationship
+		time_start = parse_timestamp(f_cluster.readline())
+		for line in f_cluster: pass
+		time_end   = parse_timestamp(line)
+		timeline = time_start
+
+		f_cluster.seek(0)
+
+		flag_start = False # used to identify events happening at the start time
+		flag_end   = False # used to identify events happening at the end time
+
 		for line in f_cluster:
-			timeline = parse_timestamp(line)
-			break
+			timestamp = parse_timestamp(line)
+			event = parse_event(line)
+			if (timestamp == time_start):
+				if (event == T_ENTER or event == C_ENTER or event == C_IN ): flag_start = True;
+			if (timestamp == time_end):
+				if (event == T_LEAVE or event == C_LEAVE or event == C_OUT): flag_end   = True;
+
 		f_cluster.seek(0)
 
 		size = 0
+		participants = []
 
 		event_cache = ''	 # used to identify many events at the same time
 		timestamp_cache = '' # used to identify many events at the same time
@@ -70,23 +86,27 @@ def preprocess_neo4j():
 		for line in f_cluster:
 
 			timestamp              = parse_timestamp(line)
+			latitude               = parse_latitude(line)
+			longitude              = parse_longitude(line)
 			event                  = parse_event(line)
 			contribution           = parse_size(event, line)
 			size                   = size + contribution
+			participants_event     = parse_participants_event(event, line)
 			supporting_cluster_id  = parse_supporting_cluster_id(event, line)
 
 
-			nodes = parse_nodes(cluster_id, size-contribution, size, timestamp, event, event_cache, timestamp_cache)
-			edges = parse_edges(cluster_id, supporting_cluster_id, timestamp, event)
+			nodes = parse_nodes(cluster_id, event, event_cache, timestamp, timestamp_cache, latitude, longitude, size-contribution, size, participants, participants_event, time_start, time_end, flag_start, flag_end)
+			edges = parse_edges(cluster_id, supporting_cluster_id, timestamp, event, participants_event, time_start, time_end, flag_start, flag_end)
 
 			write_nodes(nodes, f_nodes)
 			write_edges(edges, f_edges)
 
-			continues = parse_continues(cluster_id, timestamp, timeline, event)
+			continues = parse_continues(cluster_id, timestamp, timeline, event, time_start, time_end)
 			write_continues(continues, f_edges)
 
 			size = update_size(size, contribution, event)
-			timeline = update_timeline(timestamp, event)
+			participants = update_participants(participants, participants_event, event)
+			timeline = update_timeline(timestamp, event, time_start, time_end)
 			event_cache = event
 			timestamp_cache = timestamp
 
@@ -97,225 +117,12 @@ def preprocess_neo4j():
 
 
 
-
-
-# # Perpare to import to Neo4j
-
-# def preprocess_neo4j():
-
-# 	clusters = identify_clusters(cluster_dir)
-# 	identify_nodes(clusters)
-# 	identify_edges(clusters)
-
-
-# def identify_nodes(clusters):
-
-# 	for cluster in clusters:
-
-# 		f_cluster = open(cluster_dir + cluster,   'r')
-# 		f_nodes   = open(preprocessedneo4j_dir + nodes_filename, 'w')
-
-# 		cluster_id   = parse_cluster_id(cluster)
-# 		cluster_size = 0
-
-# 		cached_timestamp              = ''
-# 		cached_event                  = ''
-# 		cached_cluster_event          = ''
-# 		cached_cluster_size           = ''
-# 		cached_cluster_id_destination = ''
-
-# 		for line in f_cluster:
-			
-# 			timestamp              = parse_timestamp(line)
-# 			event, cluster_event   = parse_event(line)
-# 			cluster_size  		   = cluster_size + parse_size(cluster_event, line)
-# 			cluster_id_destination = parse_destination(cluster_event, line)
-
-# 			if cluster_event == START: continue
-# 			if cluster_event == END  : 
-# 				node = parse_node(cluster_id, cluster_size, timestamp)
-# 				f_nodes.write(node)
-# 				continue
-
-
-# 			if cached_event == '':
-# 				cached_timestamp     		  = timestamp
-# 				cached_event         		  = event
-# 				cached_cluster_event 		  = cluster_event
-# 				cached_cluster_size  		  = cluster_size
-# 				cached_cluster_id_destination = cluster_id_destination
-# 				continue
-
-# 			else:
-# 				if cached_cluster_event == cluster_event and cached_timestamp == timestamp:
-# 						cached_cluster_size = cached_cluster_size + cluster_size
-# 						continue
-# 				else:
-# 					temp_timestamp 					= cached_timestamp
-# 					temp_event 						= cached_event
-# 					temp_cluster_event 				= cached_cluster_event
-# 					temp_cluster_size 				= cached_cluster_size
-# 					temp_cluster_id_destination 	= cached_cluster_id_destination
-
-# 					cached_timestamp				= timestamp
-# 					cached_event					= event
-# 					cached_cluster_event			= cluster_event
-# 					cached_cluster_size				= cluster_size
-# 					cached_cluster_id_destination	= cluster_id_destination
-
-# 					timestamp 						= temp_timestamp
-# 					event 							= temp_event
-# 					cluster_event 					= temp_cluster_event
-# 					cluster_size 					= temp_cluster_size
-# 					cluster_id_destination 			= temp_cluster_id_destination
-
-
-# 			node = parse_node(cluster_id, cluster_size, timestamp)
-# 			f_nodes.write(node)
-
-
-
-# 		f_cluster.close()
-# 		f_nodes.close()
-# 		f_edges.close()
-
-# 			# if event == START   : continue
-# 			# if event == END     : continue
-
-# 			# if event == T_ENTER : cache (increase size) (time shown in curr)
-# 			# if event == T_LEAVE : cache (decrease size) (time shown in prev)
-
-# 			# if event == C_IN    : process (wont find it)
-# 			# if event == C_OUT   : process (wont find it)
-
-# 			# if event == JOIN    : process time shown in prev - final
-# 			# if event == DETACH  : process time shown in curr - initial
-
-# 			# if event == C_ENTER : cache (increase size) (time shown in curr)
-# 			# if event == C_LEAVE : cache (decrease size) (time shown in prev)
-
-# 			# if event == GROUP   : process time shown is curr - initial
-# 			# if event == DISPERSE: process time shown is prev - final
-
-# 			# if event == MERGE   : cache time shown is curr - initial
-# 			# if event == SPLIT   : cache time shown is prev - final
-
-
-
-# def identify_edges(clusters):
-
-# 	for cluster in clusters:
-
-
-
-# 		f_cluster = open(cluster_dir + cluster,   'r')
-# 		f_nodes   = open(preprocessedneo4j_dir + nodes_filename, 'w')
-# 		f_edges   = open(preprocessedneo4j_dir + edges_filename, 'w')
-
-# 		cluster_id   = parse_cluster_id(cluster)
-# 		cluster_size = 0
-
-# 		cached_timestamp              = ''
-# 		cached_event                  = ''
-# 		cached_cluster_event          = ''
-# 		cached_cluster_size           = ''
-# 		cached_cluster_id_destination = ''
-
-# 		for line in f_cluster:
-			
-# 			timestamp              = parse_timestamp(line)
-# 			event, cluster_event   = parse_event(line)
-# 			cluster_size  		   = cluster_size + parse_size(cluster_event, line)
-# 			cluster_id_destination = parse_destination(cluster_event, line)
-
-
-# 			print('---------------start-----------------------------')
-# 			print (cluster_id + ' ' + timestamp.strftime('%Y-%m-%dT%H:%M:%SZ') + ' ' + event)
-# 			print('cluster_id = ' + cluster_id)
-# 			print('cluster_size = ' + str(cluster_size))
-# 			print('cluster_id_destination = ' + cluster_id_destination)
-			
-
-
-# 			if cluster_event == START: continue
-# 			if cluster_event == END  : continue
-
-# 			if cluster_event == T_ENTER or cluster_event == T_LEAVE:
-# 				if cached_cluster_event == '':
-# 					cached_timestamp     		  = timestamp
-# 					cached_event         		  = event
-# 					cached_cluster_event 		  = cluster_event
-# 					cached_cluster_size  		  = cluster_size
-# 					cached_cluster_id_destination = cluster_id_destination
-# 					continue
-# 				else:
-# 					if cached_cluster_event == cluster_event and cached_timestamp == timestamp:
-# 						cached_cluster_size = cached_cluster_size + cluster_size
-# 						continue
-# 					else:
-# 						temp_timestamp 					= cached_timestamp
-# 						temp_event 						= cached_event
-# 						temp_cluster_event 				= cached_cluster_event
-# 						temp_cluster_size 				= cached_cluster_size
-# 						temp_cluster_id_destination 	= cached_cluster_id_destination
-
-# 						cached_timestamp				= timestamp
-# 						cached_event					= event
-# 						cached_cluster_event			= cluster_event
-# 						cached_cluster_size				= cluster_size
-# 						cached_cluster_id_destination	= cluster_id_destination
-
-# 						timestamp 						= temp_timestamp
-# 						event 							= temp_event
-# 						cluster_event 					= temp_cluster_event
-# 						cluster_size 					= temp_cluster_size
-# 						cluster_id_destination 			= temp_cluster_id_destination
-# 			else:
-# 				if cached_cluster_event != '':
-# 					node = parse_node(cluster_id, cached_cluster_size, cached_timestamp)
-# 					edge = parse_edge(cluster_id, cached_cluster_id_destination, cached_timestamp, cached_event)
-
-# 					f_nodes.write(node)
-# 					f_edges.write(edge)
-# 					print ('node_c: ' + node)
-# 					print ('edge_c: ' + edge)
-# 					print('--------------------------------------------------')
-
-
-
-
-# 			node = parse_node(cluster_id, cluster_size, timestamp)
-# 			edge = parse_edge(cluster_id, cluster_id_destination, timestamp, event)
-
-
-# 			if cluster_event == '':
-# 				print ('node: ' + node)
-# 			# f_nodes.write(node)
-
-# 			if cluster_event == DISPERSE:
-# 				print ('edge: ' + edge)
-# 				# f_edges.write(edge)
-
-
-			
-# 			print('--------------------end------------------------------')
- 
-
-
-			
-			
-
-
-# 		f_cluster.close()
-# 		f_nodes.close()
-# 		f_edges.close()
-
-
-
 # Identify the cluster information
 def parse_cluster_id(filename): return filename[0:-4]
 def parse_timestamp(line):      return datetime.strptime(line[0:19], '%Y-%m-%d %H:%M:%S')
-def parse_event(line):          return string_to_relation(line[20:line.index('(')])
+def parse_latitude(line):       return line[20:30]
+def parse_longitude(line):      return line[31:41]
+def parse_event(line):          return string_to_relation(line[42:line.index('(')])
 
 
 
@@ -344,6 +151,28 @@ def parse_size(event, line):
 	or  event == SPLIT): return - (line.count(',', line.index('['), line.index(']')) + 1)
 
 
+# Identifies the participants of a cluster event
+
+def parse_participants_event(event, line):
+
+	if (event == START): return []
+	if (event == END)  : return []
+
+	if (event == T_ENTER
+	or  event == T_LEAVE): return [line[line.index('(')+1: line.index(')')].split(', ')[0]]
+
+	if (event == C_IN
+	or  event == DETACH
+	or  event == C_ENTER
+	or  event == GROUP
+	or  event == MERGE
+	or  event == C_OUT
+	or  event == JOIN
+	or  event == C_LEAVE
+	or  event == DISPERSE
+	or  event == SPLIT): return line[line.index('[')+1:line.index(']')].split(', ')
+
+
 # Identifies the destination of the relationship
 
 def parse_supporting_cluster_id(event, line):
@@ -370,63 +199,85 @@ def parse_supporting_cluster_id(event, line):
 
 # Prepares a list of CVS entries for nodes
 
-def parse_nodes(nodeId, nodeSizeBefore, nodeSizeAfter, timestamp, event, event_cache, timestamp_cache):
+def parse_nodes(nodeId, event, event_cache, timestamp, timestamp_cache, latitude, longitude, nodeSizeBefore, nodeSizeAfter, participants, participants_event, time_start, time_end, flag_start, flag_end):
 
 	if (event == START):    return []
 	if (event == END)  :    return []
 
 	if event_cache == T_LEAVE or event_cache == C_LEAVE: timestamp_cache = timestamp_cache + timedelta(minutes=rate)
 
-	if (event == GROUP)   : return [parse_node(nodeId, nodeSizeAfter , timestamp)]
-	if (event == DISPERSE): return [parse_node(nodeId, nodeSizeBefore, timestamp)]
-
-	if (event == T_ENTER):
-		if (timestamp != timestamp_cache):
-			return [parse_node(nodeId, nodeSizeBefore, (timestamp - timedelta(minutes=rate))), parse_node(nodeId, nodeSizeAfter, timestamp)]
+	if (event == GROUP)   : return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeAfter , participants_event)]
+	if (event == DISPERSE):
+		if (time_start == time_end and (flag_start or flag_end)):
+			return []
 		else:
-			return [parse_node(nodeId, nodeSizeAfter, timestamp)]
+			return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeBefore, participants_event)]
 
-	if (event == T_LEAVE):
-		if (timestamp != timestamp_cache - timedelta(minutes=rate)):
-			return [parse_node(nodeId, nodeSizeBefore, timestamp), parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
+	if (event == T_ENTER
+	or  event == C_ENTER
+	or  event == C_IN):
+		if (time_start == time_end):
+			return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeAfter, participants + participants_event)]
+		elif (timestamp == time_start):
+			if (timestamp != timestamp_cache):
+				return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeBefore, participants), parse_node(nodeId, (timestamp + timedelta(minutes=rate)/2), latitude, longitude, nodeSizeAfter, participants+participants_event)]
+			else:
+				return [parse_node(nodeId, (timestamp + timedelta(minutes=rate)/2), latitude, longitude, nodeSizeAfter, participants+participants_event)]
+		elif (timestamp == time_end and flag_end):
+			if (timestamp != timestamp_cache):
+				return [parse_node(nodeId, (timestamp - timedelta(minutes=rate)), latitude, longitude, nodeSizeBefore, participants), parse_node(nodeId, (timestamp - timedelta(minutes=rate)/2), latitude, longitude, nodeSizeAfter, participants+participants_event)]
+			else:
+				return [parse_node(nodeId, (timestamp - timedelta(minutes=rate)/2), latitude, longitude, nodeSizeAfter, participants+participants_event)]
 		else:
-			return [parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
+			if (timestamp != timestamp_cache):
+				return [parse_node(nodeId, (timestamp - timedelta(minutes=rate)), latitude, longitude, nodeSizeBefore, participants), parse_node(nodeId, timestamp, latitude, longitude, nodeSizeAfter, participants+participants_event)]
+			else:
+				return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeAfter, participants+participants_event)]
+			
+
+	if (event == T_LEAVE
+	or  event == C_LEAVE
+	or  event == C_OUT):
+		if (time_start == time_end):
+			return [] # return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeBefore, participants)]
+		elif (timestamp == time_end):
+			if (timestamp != timestamp_cache - timedelta(minutes=rate)):
+				return [parse_node(nodeId, (timestamp - timedelta(minutes=rate)/2), latitude, longitude, nodeSizeBefore, participants), parse_node(nodeId, timestamp, latitude, longitude, nodeSizeAfter, [p for p in participants if p not in participants_event])]
+			else:
+				return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeAfter, [p for p in participants if p not in participants_event])]
+		elif (timestamp == time_start and flag_start):
+			if (timestamp != timestamp_cache - timedelta(minutes=rate)):
+				return [parse_node(nodeId, (timestamp + timedelta(minutes=rate)/2), latitude, longitude, nodeSizeBefore, participants), parse_node(nodeId, (timestamp + timedelta(minutes=rate)), latitude, longitude, nodeSizeAfter, [p for p in participants if p not in participants_event])]
+			else:
+				return [parse_node(nodeId, (timestamp + timedelta(minutes=rate)), latitude, longitude, nodeSizeAfter, [p for p in participants if p not in participants_event])]
+		else:
+			if (timestamp != timestamp_cache - timedelta(minutes=rate)):
+				return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeBefore, participants), parse_node(nodeId, (timestamp + timedelta(minutes=rate)), latitude, longitude, nodeSizeAfter, [p for p in participants if p not in participants_event])]
+			else:
+				return [parse_node(nodeId, (timestamp + timedelta(minutes=rate)), latitude, longitude, nodeSizeAfter, [p for p in participants if p not in participants_event])]
+			
 
 
-	if (event == JOIN):     return [parse_node(nodeId, nodeSizeBefore, timestamp)]
-	if (event == DETACH):   return [parse_node(nodeId, nodeSizeAfter, timestamp)]
 
-	if  event == C_ENTER:
-		if (timestamp != timestamp_cache):
-			return [parse_node(nodeId, nodeSizeBefore, (timestamp - timedelta(minutes=rate))), parse_node(nodeId, nodeSizeAfter, timestamp)]
+	if (event == JOIN):
+		if(time_start == time_end and (flag_start or flag_end)):
+			return []
 		else:
-			return [parse_node(nodeId, nodeSizeAfter, timestamp)]
-	if  event == C_LEAVE:
-		if (timestamp != timestamp_cache - timedelta(minutes=rate)):
-			return [parse_node(nodeId, nodeSizeBefore, timestamp), parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
-		else:
-			return [parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
+		    return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeBefore, participants_event)]
+	if (event == DETACH):   return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeAfter , participants_event)]
 
-	if  event == C_IN:
-		if (timestamp != timestamp_cache):
-			return [parse_node(nodeId, nodeSizeBefore, (timestamp - timedelta(minutes=rate))), parse_node(nodeId, nodeSizeAfter, timestamp)]
-		else:
-			return [parse_node(nodeId, nodeSizeAfter, timestamp)]
-	if  event == C_OUT:
-		if (timestamp != timestamp_cache - timedelta(minutes=rate)):
-			return [parse_node(nodeId, nodeSizeBefore, timestamp), parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
-		else:
-			return [parse_node(nodeId, nodeSizeAfter, (timestamp + timedelta(minutes=rate)))]
 	
-	if  event == MERGE:     return [parse_node(nodeId, nodeSizeAfter, timestamp)]
-	if  event == SPLIT:     return [parse_node(nodeId, nodeSizeBefore, timestamp)]
+	if  (event == MERGE and event_cache != MERGE): return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeAfter, participants+participants_event)]
+	elif(event == MERGE and event_cache == MERGE): return []
+	if  (event == SPLIT and event_cache != SPLIT): return [parse_node(nodeId, timestamp, latitude, longitude, nodeSizeBefore, participants)]
+	elif(event == SPLIT and event_cache == SPLIT): return []
 
 
 
 
 # Prepares a list of CSV entries for edges
 
-def parse_edges(nodeId, supportingNodeId, timestamp, event):
+def parse_edges(nodeId, supportingNodeId, timestamp, event, participants_event, time_start, time_end, flag_start, flag_end):
 
 	if (event == START):    return []
 	if (event == END)  :    return []
@@ -434,23 +285,65 @@ def parse_edges(nodeId, supportingNodeId, timestamp, event):
 	if (event == GROUP)   : return []
 	if (event == DISPERSE): return []
 
-	if (event == T_ENTER):  return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event))]
-	if (event == T_LEAVE):  return [parse_edge(nodeId, nodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event))]
+	if (event == T_ENTER):
+		if(time_start == time_end):
+			return [parse_edge(nodeId, nodeId, timestamp, timestamp, relation_to_string(event), participants_event)]
+		elif (timestamp == time_start + timedelta(minutes=rate) and flag_start):
+			return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)/2), timestamp, relation_to_string(event), participants_event)]
+		elif (timestamp == time_start):
+			return [parse_edge(nodeId, nodeId, timestamp, (timestamp + timedelta(minutes=rate)/2), relation_to_string(event), participants_event)]
+		elif (timestamp == time_end and flag_end):
+			return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)), (timestamp - timedelta(minutes=rate)/2), relation_to_string(event), participants_event)]
+		else:
+			return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event), participants_event)]
+	if (event == T_LEAVE):
+		if(time_start == time_end):
+			return [parse_edge(nodeId, nodeId, timestamp, timestamp, relation_to_string(event), participants_event)]
+		elif (timestamp == time_end - timedelta(minutes=rate) and flag_end):
+			return [parse_edge(nodeId, nodeId, timestamp, (timestamp + timedelta(minutes=rate)/2), relation_to_string(event), participants_event)]
+		elif (timestamp == time_end):
+			return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)/2), timestamp, relation_to_string(event), participants_event)]
+		elif (timestamp == time_start and flag_start):
+			return [parse_edge(nodeId, nodeId, (timestamp + timedelta(minutes=rate)/2), (timestamp + timedelta(minutes=rate)), relation_to_string(event), participants_event)]
+		else:
+			return [parse_edge(nodeId, nodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event), participants_event)]
 
-	if (event == JOIN):     return [parse_edge(nodeId, supportingNodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event))]
-	if (event == DETACH):   return [parse_edge(supportingNodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event))]
+	if (event == C_LEAVE):
+		edges = [parse_edge(nodeId, supportingNodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event), participants_event)]
+		if(time_start == time_end):
+			return edges + [parse_continue(nodeId, timestamp, timestamp)]
+		elif (timestamp == time_end - timedelta(minutes=rate) and flag_end):
+			return edges + [parse_continue(nodeId, timestamp, (timestamp + timedelta(minutes=rate)/2))]
+		elif (timestamp == time_start):
+			return edges + [parse_continue(nodeId, (timestamp - timedelta(minutes=rate)/2), timestamp)]
+		elif (timestamp == time_end and flag_end):
+			return edges + [parse_continue(nodeId, (timestamp + timedelta(minutes=rate)/2), (timestamp + timedelta(minutes=rate)))]
+		else:
+			return edges + [parse_continue(nodeId, timestamp, (timestamp + timedelta(minutes=rate)))]
+	if (event == C_OUT  ): return [parse_edge(nodeId, supportingNodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event), participants_event)]
 
-	if  event == C_ENTER:   return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event))]
-	if  event == C_LEAVE:   return [parse_edge(nodeId, nodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event))]
+	if (event == C_ENTER):
+		edges = [parse_edge(supportingNodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event), participants_event)]
+		if(time_start == time_end):
+			return edges + [parse_continue(nodeId, timestamp, timestamp)]
+		elif (timestamp == time_start + timedelta(minutes=rate) and flag_start):
+			return edges + [parse_continue(nodeId, (timestamp - timedelta(minutes=rate)/2), timestamp)]
+		elif (timestamp == time_start):
+			return edges + [parse_continue(nodeId, timestamp, (timestamp + timedelta(minutes=rate)/2))]
+		elif (timestamp == time_end and flag_end):
+			return edges + [parse_continue(nodeId, (timestamp - timedelta(minutes=rate)), (timestamp - timedelta(minutes=rate)/2))]
+		else:
+			return edges + [parse_continue(nodeId, (timestamp - timedelta(minutes=rate)), timestamp)]
+	if (event == C_IN   ): return [parse_edge(supportingNodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event), participants_event)]
 
-	if  event == C_IN:      return [parse_edge(nodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event))]
-	if  event == C_OUT:     return [parse_edge(nodeId, nodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event))]
+	if (event == JOIN):    return [parse_edge(nodeId, supportingNodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event), participants_event)]
+	if (event == DETACH):  return [parse_edge(supportingNodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event), participants_event)]
 	
-	if  event == MERGE:     return [parse_edge(supportingNodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event))]
-	if  event == SPLIT:     return [parse_edge(nodeId, supportingNodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event))]
+	if (event == MERGE):   return [parse_edge(supportingNodeId, nodeId, (timestamp - timedelta(minutes=rate)), timestamp, relation_to_string(event), participants_event)]
+	if (event == SPLIT):   return [parse_edge(nodeId, supportingNodeId, timestamp, (timestamp + timedelta(minutes=rate)), relation_to_string(event), participants_event)]
 
 
-def parse_continues(cluster_id, timestamp, timeline, event):
+def parse_continues(cluster_id, timestamp, timeline, event, time_start, time_end):
 
 	if timeline == '': return []
 
@@ -463,15 +356,20 @@ def parse_continues(cluster_id, timestamp, timeline, event):
 	or  event == C_ENTER
 	or  event == GROUP
 	or  event == MERGE):
-		if timestamp > timeline + timedelta(minutes=rate): return [parse_continue(cluster_id, timeline, timestamp - timedelta(minutes=rate))]
+		if (timestamp > timeline + timedelta(minutes=rate)): return [parse_continue(cluster_id, timeline, timestamp - timedelta(minutes=rate))]
 
 	if (event == T_LEAVE
 	or 	event == C_OUT
-	or  event == JOIN
-	or  event == C_LEAVE
+	or  event == C_LEAVE):
+		if (timestamp > timeline):
+			if (timestamp != time_end): return [parse_continue(cluster_id, timeline, timestamp)]
+			else: return [parse_continue(cluster_id, timeline, (timestamp - timedelta(minutes=rate)/2))]
+
+	if (event == JOIN
 	or  event == DISPERSE
 	or  event == SPLIT):
-		if timestamp > timeline: return [parse_continue(cluster_id, timeline, timestamp)]
+		if (timestamp > timeline):
+			return [parse_continue(cluster_id, timeline, timestamp)]
 
 	return []
 
@@ -480,16 +378,16 @@ def parse_continues(cluster_id, timestamp, timeline, event):
 
 
 # Creates the CSV entry for a node
-def parse_node(nodeId, nodeSize, timestamp):
-	return nodeId + ',' + str(nodeSize) + ',' + timestamp.strftime('%Y-%m-%dT%H:%M:%SZ') + '\n'
+def parse_node(nodeId, timestamp, latitude, longitude, nodeSize, participants):
+	return nodeId + ',' + timestamp.strftime('%Y-%m-%dT%H:%M:%SZ') + ',' + latitude + ',' + longitude + ',' + str(nodeSize) + ',' + '"' + ','.join(participants) + '"' + '\n'
 
 # Creates the CSV entry for an edge
-def parse_edge(nodeId, supportingNodeId, timestamp_start, timestamp_end, edgeName):
-	return nodeId + ',' + supportingNodeId + ',' + timestamp_start.strftime('%Y-%m-%dT%H:%M:%SZ') + ',' + timestamp_end.strftime('%Y-%m-%dT%H:%M:%SZ') + ',' + edgeName + '\n'
+def parse_edge(nodeId, supportingNodeId, timestamp_start, timestamp_end, edgeName, participants):
+	return nodeId + ',' + supportingNodeId + ',' + timestamp_start.strftime('%Y-%m-%dT%H:%M:%SZ') + ',' + timestamp_end.strftime('%Y-%m-%dT%H:%M:%SZ') + ',' + edgeName + ',' + '"' + ','.join(participants) + '"' + '\n'
 
 # Creates the CSV entry for an continue
 def parse_continue(nodeId, timestamp_start, timestamp_end):
-	return parse_edge(nodeId, nodeId, timestamp_start, timestamp_end, 'CONTINUE')
+	return parse_edge(nodeId, nodeId, timestamp_start, timestamp_end, 'CONTINUE', [])
 
 
 # Writes each node in the CSV file
@@ -506,7 +404,7 @@ def write_continues(continues, f_edges):
 
 
 
-def update_timeline(timestamp, event):
+def update_timeline(timestamp, event, time_start, time_end):
 
 	if (event == START)   : return timestamp
 	if (event == END)     : return timestamp
@@ -514,20 +412,23 @@ def update_timeline(timestamp, event):
 	if (event == GROUP)   : return timestamp
 	if (event == DISPERSE): return timestamp + timedelta(minutes=rate)
 
-	if (event == T_ENTER):  return timestamp
-	if (event == T_LEAVE):  return timestamp + timedelta(minutes=rate)
+	if (event == T_ENTER
+	or  event == C_ENTER
+	or  event == C_IN):
+		if (timestamp != time_start):  return timestamp
+		else: return (timestamp + timedelta(minutes=rate)/2)
+
+	if (event == T_LEAVE
+	or  event == C_LEAVE
+	or  event == C_OUT):
+		if (timestamp != time_end):  return timestamp + timedelta(minutes=rate)
+		else: return timestamp
 
 	if (event == JOIN)  :   return timestamp + timedelta(minutes=rate)
 	if (event == DETACH):   return timestamp
-
-	if  event == C_ENTER:   return timestamp
-	if  event == C_LEAVE:   return timestamp + timedelta(minutes=rate)
-
-	if event == C_IN:       return timestamp
-	if event == C_OUT:      return timestamp + timedelta(minutes=rate)
 	
-	if  event == MERGE:     return timestamp
-	if  event == SPLIT:     return timestamp + timedelta(minutes=rate)
+	if (event == MERGE):    return timestamp
+	if (event == SPLIT):    return timestamp + timedelta(minutes=rate)
 
 
 
@@ -536,29 +437,21 @@ def update_size(size, contribution, event):
 	return size
 
 
+def update_participants(participants, participants_event, event):
 
+	if (event == START): return participants
+	if (event == END)  : return participants
 
+	if (event == GROUP
+	or  event == T_ENTER
+	or  event == DETACH
+	or  event == C_ENTER
+	or  event == C_IN
+	or  event == MERGE): return participants + participants_event
 
-
-# # Clusters clusters based on the pattern of their sizes during their lifetimes.
-
-# def process_size():
-
-# 	datapoints = []
-
-# 	clusters = identify_clusters(preprocessed2_dir)
-# 	f_preprocessed = [open(preprocessed2_dir + cluster, 'r').readlines() for cluster in clusters]
-# 	datapoints = [[format_datapoint(datapoint.split(',')) for datapoint in cluster] for cluster in f_preprocessed]
-
-# 	distances = [[fastdtw(datapoint1, datapoint2, dist=euclidean)[0] for datapoint2 in datapoints] for datapoint1 in datapoints]
-
-# 	db = DBSCAN(eps=1000, min_samples=3, metric="precomputed").fit(distances)
-
-# 	print(db.labels_)
-
-
-# # A helper function to format a datapoint
-# def format_datapoint(datapoint):
-# 	if datapoint == []: return []
-# 	if datapoint == None: return None
-# 	return [time.mktime(ciso8601.parse_datetime(datapoint[0]).timetuple()), int(datapoint[1])]
+	if (event == DISPERSE
+	or  event == T_LEAVE
+	or  event == JOIN
+	or  event == C_LEAVE
+	or  event == C_OUT
+	or  event == SPLIT): return [p for p in participants if p not in participants_event]

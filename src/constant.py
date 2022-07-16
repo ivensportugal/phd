@@ -28,14 +28,15 @@ file_suffix = '.txt'
 
 # Parameters
 min_cluster = 3
-min_shared  = 0.8
+min_shared  = 0.66
 
 if len(sys.argv) > 3:
 	min_cluster = int(sys.argv[2])
 
 
 # Process
-rate = 1 # minutes
+rate = 5 # minutes
+wait_constant = 2 # times the rate
 
 
 # Cluster
@@ -44,13 +45,13 @@ NO_CLUSTER = 0
 
 
 # Neo4J
-NODES_HEADER = 'clusterId,size,timestamp\n'
-EDGES_HEADER = 'clusterIdBefore,clusterIdAfter,timestampBefore,timestampAfter,clusterRelationship\n'
+NODES_HEADER = 'clusterId,timestamp,latitude,longitude,size,participants\n'
+EDGES_HEADER = 'clusterIdBefore,clusterIdAfter,timestampBefore,timestampAfter,clusterRelationship,participants\n'
 
 
 
 # DBSCAN
-eps = 40  # (in meters) The maximum distance between two samples for them
+eps = 50  # (in meters) The maximum distance between two samples for them
 					  	# to be considered as in the same neighborhood.
 min_samples = min_cluster # The number of samples (or total weight) in a neighborhood
 							# for a point to be considered as a core point. This includes the point itself.
