@@ -8,9 +8,9 @@ df = pd.read_csv('/Users/Ivens/Downloads/sizes.csv')
 # preprocess by transforming string to list of ints
 df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
 
-# run fastdtw (use second method for tests)
+# run fastdtw (use third method for tests)
 n = len(df['Sizes'])
-distances = [[fastdtw(df['Sizes'][i], df['Sizes'][j], dist=euclidean)[0] if (df['Sizes'][i][-1] != df['Sizes'][j][-1]) else {} for j in range(i+1)] for i in range(n)]
+distances = [[fastdtw(df['Sizes'][i], df['Sizes'][j], dist=euclidean)[0] if (df['Sizes'][i][-1] != df['Sizes'][j][-1]) else 999 for j in range(i+1)] for i in range(n)]
 # distances = [[fastdtw(x, y, dist=euclidean)[0] for y in df['Sizes']] for x in df['Sizes']]
 # distances = [[fastdtw(x, y, dist=euclidean)[0] for y in df.iloc[0:10,1]] for x in df.iloc[0:10,1]]
 
