@@ -6,7 +6,7 @@ from scipy.spatial.distance import euclidean
 df = pd.read_csv('/Users/Ivens/Downloads/sizes.csv')
 
 # preprocess by transforming string to list of ints
-df['Sizes'] = [x.strip('[]').split(',') for x in df['Sizes']]
+df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
 
 # run fastdtw (use second method for tests)
 distances = [[fastdtw(x, y, dist=euclidean)[0] for y in df['Sizes']] for x in df['Sizes']]
