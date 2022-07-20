@@ -8,7 +8,7 @@ df = pd.read_csv('/Users/Ivens/Downloads/sizes.csv')
 # preprocess by transforming string to list of ints
 df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
 
-# run fastdtw (use third method for tests)
+# run fastdtw
 n = len(df['Sizes'])
 
 distances=[]
