@@ -24,12 +24,12 @@ for i in range(n):
 	distances.append(row)
 
 
-# add headers to the columns and lines
 d = pd.DataFrame(distances)
 
 # print some reports to user
 print('Number of cases: ' + str((d < 10).sum(axis=1).sum()))
 
+# add headers to the columns and lines
 d.columns = df.iloc[:len(d),0]
 d.insert(0,'Path',df['Path'],True)
 
