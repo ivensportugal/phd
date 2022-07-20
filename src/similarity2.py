@@ -24,7 +24,6 @@ for i in range(n):
 	distances.append(row)
 
 
-
 # add headers to the columns and lines
 d = pd.DataFrame(distances)
 
