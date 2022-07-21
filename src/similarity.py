@@ -21,10 +21,10 @@ for i in range(n):
 		elif(row[1]  == column[1]): distance = 999
 		elif(row[-1] == column[-1]): distance = 999
 		else: distance = fastdtw(row, column)[0]
-		distances.append([str(row),str(column),distance])
+		distances.append([df['Path'][i],df['Path'][j],str(row),str(column),distance])
 
 d = pd.DataFrame(distances)
-d.columns = ['Path1','Path2','Distance']
+d.columns = ['Path1','Path2','Size1','Size2','Distance']
 
 # print satisfying cases to the user
 # print(d[d['Distance']<10])
