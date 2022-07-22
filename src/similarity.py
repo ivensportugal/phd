@@ -14,14 +14,14 @@ n = len(df['Sizes'])
 distances=[]
 for i in range(n):
 	row = df['Sizes'][i]
-	for j in range(n):
-		column = df['Sizes'][j]
+	for j in range(1):
+		column = [4, 5, 5, 4, 4, 9, 5, 5, 6, 5, 7, 5, 3]
 		distance = 0
 		if(j > i): continue
 		elif(row[0]  == column[0]): distance = 999
 		elif(row[-1] == column[-1]): distance = 999
 		else: distance = fastdtw(row, column)[0]
-		distances.append([df['Path'][i],df['Path'][j],str(row),str(column),distance])
+		distances.append([[50225,51033],df['Path'][i],str(row),str(column),distance])
 
 d = pd.DataFrame(distances)
 d.columns = ['Path1','Path2','Size1','Size2','Distance']
@@ -30,8 +30,8 @@ d.columns = ['Path1','Path2','Size1','Size2','Distance']
 # print(d[d['Distance']<10])
 
 d10 = d[d['Distance']<10]
-d15 = d[d['Distance']<15]
-d20 = d[d['Distance']<20]
+d15 = d[(d['Distance']>=10) & (d['Distance']<15)]
+d20 = d[(d['Distance']>=15) & (d['Distance']<20)]
 
 # print reports to the user
 print('Number of cases where distance < 10: ' + str(len(d10)))
