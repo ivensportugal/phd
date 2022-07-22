@@ -17,7 +17,7 @@ for i in range(n):
 	for j in range(n):
 		column = df['Sizes'][j]
 		distance = 0
-		if(j > i): distance = 999
+		if(j > i): continue
 		elif(row[0]  == column[0]): distance = 999
 		elif(row[-1] == column[-1]): distance = 999
 		else: distance = fastdtw(row, column)[0]
