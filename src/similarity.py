@@ -11,17 +11,28 @@ df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
 # run fastdtw
 n = len(df['Sizes'])
 
+# optimized < n^2 comparisons
 distances=[]
 for i in range(n):
 	row = df['Sizes'][i]
-	for j in range(1):
-		column = [4, 5, 5, 4, 4, 9, 5, 5, 6, 5, 7, 5, 3]
+	for j in range(n):
+		column = df['Sizes'][j]
 		distance = 0
 		if(j > i): continue
-		elif(row[0]  == column[0]): distance = 999
-		elif(row[-1] == column[-1]): distance = 999
+		elif(len(list(set(df['Path'][i][1:-1].split(',')) & set(df['Path'][j][1:-1].split(',')))) > 1): continue # if they have 2 intersections
 		else: distance = fastdtw(row, column)[0]
-		distances.append([[50225,51033],df['Path'][i],str(row),str(column),distance])
+		distances.append([df['Path'][i],df['Path'][j],str(row),str(column),distance])
+
+# comparisons with only one case
+# distances=[]
+# for i in range(n):
+# 	row = df['Sizes'][i]
+# 	for j in range(1):
+# 		column = [4, 5, 5, 4, 4, 9, 5, 5, 6, 5, 7, 5, 3]
+# 		distance = 0
+# 		if(j > i): continue
+# 		else: distance = fastdtw(row, column)[0]
+# 		distances.append([[50225,51033],df['Path'][i],str(row),str(column),distance])
 
 d = pd.DataFrame(distances)
 d.columns = ['Path1','Path2','Size1','Size2','Distance']
