@@ -10,6 +10,7 @@ df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
 
 # run fastdtw
 n = len(df['Sizes'])
+nComparisons = 0
 
 # optimized < n^2 comparisons
 distances=[]
@@ -20,8 +21,8 @@ for i in range(n):
 		column = df['Sizes'][j]
 		distance = 0
 		if(j >= i): continue
-		elif(len(list(set(df['Path'][i][1:-1].split(',')) & set(df['Path'][j][1:-1].split(',')))) > 1): continue # if they have 2 intersections
-		else: distance = fastdtw(row, column)[0]
+		# elif(len(list(set(df['Path'][i][1:-1].split(',')) & set(df['Path'][j][1:-1].split(',')))) > 1): continue # if they have 2 intersections
+		else: distance = fastdtw(row, column)[0]; nComparisons = nComparisons + 1
 		distances.append([df['Path'][i],df['Path'][j],str(row),str(column),distance])
 
 # comparisons with only one case
@@ -56,6 +57,7 @@ d15.to_csv('/Users/Ivens/Downloads/distances15.csv', index=None)
 d20.to_csv('/Users/Ivens/Downloads/distances20.csv', index=None)
 
 # Case Study 3 Results
-print('Number of cluster paths  : ' + str(n))
-print('Sum of distance values   : ' + str(d['Distance'].sum()))
-print('Coefficient of similarity: ' + str(n/d['Distance'].sum()))
+print('Number of cluster paths           : ' + str(n))
+print('Number of cluster path comparisons: ' + str(nComparisons))
+print('Sum of distance values            : ' + str(d['Distance'].sum()))
+print('Coefficient of similarity         : ' + str(nComparisons/d['Distance'].sum()))
