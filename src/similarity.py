@@ -56,6 +56,6 @@ d15.to_csv('/Users/Ivens/Downloads/distances15.csv', index=None)
 d20.to_csv('/Users/Ivens/Downloads/distances20.csv', index=None)
 
 # Case Study 3 Results
-print('Number of cluster paths  : ', n)
-print('Sum of distance values   : ', d['Distance'].sum())
-print('Coefficient of similarity: ', n/d['Distance'].sum())
+print('Number of cluster paths  : ' + str(n))
+print('Sum of distance values   : ' + str(d['Distance'].sum()))
+print('Coefficient of similarity: ' + str(n/d['Distance'].sum()))
