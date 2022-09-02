@@ -15,10 +15,11 @@ n = len(df['Sizes'])
 distances=[]
 for i in range(n):
 	row = df['Sizes'][i]
+	print(i)
 	for j in range(n):
 		column = df['Sizes'][j]
 		distance = 0
-		if(j > i): continue
+		if(j >= i): continue
 		elif(len(list(set(df['Path'][i][1:-1].split(',')) & set(df['Path'][j][1:-1].split(',')))) > 1): continue # if they have 2 intersections
 		else: distance = fastdtw(row, column)[0]
 		distances.append([df['Path'][i],df['Path'][j],str(row),str(column),distance])
@@ -28,11 +29,11 @@ for i in range(n):
 # for i in range(n):
 # 	row = df['Sizes'][i]
 # 	for j in range(1):
-# 		column = [4, 5, 5, 4, 4, 9, 5, 5, 6, 5, 7, 5, 3]
+# 		column = [5, 5, 8, 8, 7, 7, 6, 6]
 # 		distance = 0
 # 		if(j > i): continue
 # 		else: distance = fastdtw(row, column)[0]
-# 		distances.append([[50225,51033],df['Path'][i],str(row),str(column),distance])
+# 		distances.append([[170228,170269,170315,170348],df['Path'][i],str(row),str(column),distance])
 
 d = pd.DataFrame(distances)
 d.columns = ['Path1','Path2','Size1','Size2','Distance']
@@ -53,3 +54,8 @@ print('Number of cases where distance < 20: ' + str(len(d20)))
 d10.to_csv('/Users/Ivens/Downloads/distances10.csv', index=None)
 d15.to_csv('/Users/Ivens/Downloads/distances15.csv', index=None)
 d20.to_csv('/Users/Ivens/Downloads/distances20.csv', index=None)
+
+# Case Study 3 Results
+print('Number of cluster paths  : ', n)
+print('Sum of distance values   : ', d['Distance'].sum())
+print('Coefficient of similarity: ', n/d['Distance'].sum())
