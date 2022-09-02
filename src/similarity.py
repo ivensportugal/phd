@@ -57,6 +57,7 @@ d15.to_csv('/Users/Ivens/Downloads/distances15.csv', index=None)
 d20.to_csv('/Users/Ivens/Downloads/distances20.csv', index=None)
 
 # Case Study 3 Results
+print('')
 print('Number of cluster paths           : ' + str(n))
 print('Number of cluster path comparisons: ' + str(nComparisons))
 print('Sum of distance values            : ' + str(d['Distance'].sum()))
