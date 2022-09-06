@@ -440,18 +440,6 @@ def update_timeline(timestamp, event, time_start, time_end, flag_start, flag_end
 		elif (timestamp == time_start and flag_start): return timestamp + timedelta(minutes=rate)
 		else: return timestamp + timedelta(minutes=rate)
 
-	# if (event == T_ENTER
-	# or  event == C_ENTER
-	# or  event == C_IN):
-	# 	if (timestamp != time_start):  return timestamp
-	# 	else: return (timestamp + timedelta(minutes=rate)/2)
-
-	# if (event == T_LEAVE
-	# or  event == C_LEAVE
-	# or  event == C_OUT):
-	# 	if (timestamp != time_end):  return timestamp + timedelta(minutes=rate)
-	# 	else: return timestamp
-
 	if (event == C_IN):     return timestamp
 	if (event == C_OUT):    return timestamp + timedelta(minutes=rate)
 
