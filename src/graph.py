@@ -314,9 +314,9 @@ def parse_edges(nodeId, supportingNodeId, timestamp, event, participants_event, 
 			return edges + [parse_continue(nodeId, timestamp, timestamp)]
 		elif (timestamp == time_end - timedelta(minutes=rate) and flag_end):
 			return edges + [parse_continue(nodeId, timestamp, (timestamp + timedelta(minutes=rate)/2))]
-		elif (timestamp == time_start):
+		elif (timestamp == time_end):
 			return edges + [parse_continue(nodeId, (timestamp - timedelta(minutes=rate)/2), timestamp)]
-		elif (timestamp == time_end and flag_end):
+		elif (timestamp == time_start and flag_start):
 			return edges + [parse_continue(nodeId, (timestamp + timedelta(minutes=rate)/2), (timestamp + timedelta(minutes=rate)))]
 		else:
 			return edges + [parse_continue(nodeId, timestamp, (timestamp + timedelta(minutes=rate)))]
