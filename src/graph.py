@@ -106,7 +106,7 @@ def preprocess_neo4j():
 
 			size = update_size(size, contribution, event)
 			participants = update_participants(participants, participants_event, event)
-			timeline = update_timeline(timestamp, event, time_start, time_end)
+			timeline = update_timeline(timestamp, event, time_start, time_end, flag_start, flag_end)
 			event_cache = event
 			timestamp_cache = timestamp
 
@@ -404,7 +404,7 @@ def write_continues(continues, f_edges):
 
 
 
-def update_timeline(timestamp, event, time_start, time_end):
+def update_timeline(timestamp, event, time_start, time_end, flag_start, flag_end):
 
 	if (event == START)   : return timestamp
 	if (event == END)     : return timestamp
@@ -412,17 +412,48 @@ def update_timeline(timestamp, event, time_start, time_end):
 	if (event == GROUP)   : return timestamp
 	if (event == DISPERSE): return timestamp + timedelta(minutes=rate)
 
-	if (event == T_ENTER
-	or  event == C_ENTER
-	or  event == C_IN):
-		if (timestamp != time_start):  return timestamp
-		else: return (timestamp + timedelta(minutes=rate)/2)
-
-	if (event == T_LEAVE
-	or  event == C_LEAVE
-	or  event == C_OUT):
-		if (timestamp != time_end):  return timestamp + timedelta(minutes=rate)
+	if (event == T_ENTER):
+		if(time_start == time_end): return timestamp
+		elif (timestamp == time_start + timedelta(minutes=rate) and flag_start): return timestamp
+		elif (timestamp == time_start): return timestamp + timedelta(minutes=rate)/2
+		elif (timestamp == time_end and flag_end): return timestamp - timedelta(minutes=rate)/2
 		else: return timestamp
+
+	if (event == T_LEAVE):
+		if(time_start == time_end): return timestamp
+		elif (timestamp == time_end - timedelta(minutes=rate) and flag_end): return timestamp + timedelta(minutes=rate)/2
+		elif (timestamp == time_end): return timestamp
+		elif (timestamp == time_start and flag_start): return timestamp + timedelta(minutes=rate)
+		else: return timestamp + timedelta(minutes=rate)
+
+	if (event == C_ENTER):
+		if(time_start == time_end): return timestamp
+		elif (timestamp == time_start + timedelta(minutes=rate) and flag_start): return timestamp
+		elif (timestamp == time_start): return timestamp + timedelta(minutes=rate)/2
+		elif (timestamp == time_end and flag_end): return timestamp - timedelta(minutes=rate)/2
+		else: return timestamp
+
+	if (event == C_LEAVE):
+		if(time_start == time_end): return timestamp
+		elif (timestamp == time_end - timedelta(minutes=rate) and flag_end): return timestamp + timedelta(minutes=rate)/2
+		elif (timestamp == time_end): return timestamp
+		elif (timestamp == time_start and flag_start): return timestamp + timedelta(minutes=rate)
+		else: return timestamp + timedelta(minutes=rate)
+
+	# if (event == T_ENTER
+	# or  event == C_ENTER
+	# or  event == C_IN):
+	# 	if (timestamp != time_start):  return timestamp
+	# 	else: return (timestamp + timedelta(minutes=rate)/2)
+
+	# if (event == T_LEAVE
+	# or  event == C_LEAVE
+	# or  event == C_OUT):
+	# 	if (timestamp != time_end):  return timestamp + timedelta(minutes=rate)
+	# 	else: return timestamp
+
+	if (event == C_IN):     return timestamp
+	if (event == C_OUT):    return timestamp + timedelta(minutes=rate)
 
 	if (event == JOIN)  :   return timestamp + timedelta(minutes=rate)
 	if (event == DETACH):   return timestamp
