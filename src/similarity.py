@@ -3,7 +3,7 @@ from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 
 # read file
-df = pd.read_csv('/u7/iportugal/Downloads/sizes.csv')
+df = pd.read_csv('/Users/Ivens/Downloads/sizes.csv')
 
 # define min and max
 nmin = 0
