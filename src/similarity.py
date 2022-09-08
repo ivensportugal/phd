@@ -18,7 +18,7 @@ nComparisons = 0
 
 # optimized < n^2 comparisons
 distances=[]
-for i in range(nmin,max(nmax,n)):
+for i in range(nmin,min(nmax,n)):
 	row = df['Sizes'][i]
 	print(i)
 	for j in range(n):
