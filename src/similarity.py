@@ -6,8 +6,8 @@ from scipy.spatial.distance import euclidean
 df = pd.read_csv('/Users/Ivens/Downloads/sizes.csv')
 
 # define min and max
-int nmin = 0
-int nmax = 6000
+nmin = 0
+nmax = 6000
 
 # preprocess by transforming string to list of ints
 df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
