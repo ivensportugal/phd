@@ -5,6 +5,10 @@ from scipy.spatial.distance import euclidean
 # read file
 df = pd.read_csv('/Users/Ivens/Downloads/sizes.csv')
 
+# define min and max
+int nmin = 0
+int nmax = 6000
+
 # preprocess by transforming string to list of ints
 df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
 
@@ -14,7 +18,7 @@ nComparisons = 0
 
 # optimized < n^2 comparisons
 distances=[]
-for i in range(n):
+for i in range(nmin,max(nmax,n)):
 	row = df['Sizes'][i]
 	print(i)
 	for j in range(n):
