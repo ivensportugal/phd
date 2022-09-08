@@ -2,8 +2,11 @@ import pandas as pd
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 
+# location of files
+folder = '/Users/Ivens/Downloads/'
+
 # read file
-df = pd.read_csv('/Users/Ivens/Downloads/sizes.csv')
+df = pd.read_csv(folder+'sizes.csv')
 
 # define min and max
 nmin = 0
@@ -56,9 +59,9 @@ print('Number of cases where distance < 15: ' + str(len(d15)))
 print('Number of cases where distance < 20: ' + str(len(d20)))
 
 # export the result
-d10.to_csv('/Users/Ivens/Downloads/distances10.csv', index=None)
-d15.to_csv('/Users/Ivens/Downloads/distances15.csv', index=None)
-d20.to_csv('/Users/Ivens/Downloads/distances20.csv', index=None)
+d10.to_csv(folder+'distances10.csv', index=None)
+d15.to_csv(folder+'distances15.csv', index=None)
+d20.to_csv(folder+'distances20.csv', index=None)
 
 # Case Study 3 Results
 print('')
