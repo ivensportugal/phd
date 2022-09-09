@@ -25,11 +25,13 @@ for i in range(nmin,min(nmax,n)):
 	row = df['Sizes'][i]
 	print(i)
 	for j in range(n):
+		if (j >= i): continue
 		column = df['Sizes'][j]
 		distance = 0
-		if(j >= i): continue
+		# if(j >= i): continue
 		# elif(len(list(set(df['Path'][i][1:-1].split(',')) & set(df['Path'][j][1:-1].split(',')))) > 1): continue # if they have 2 intersections
-		else: distance = fastdtw(row, column)[0]; nComparisons = nComparisons + 1
+		# else: distance = fastdtw(row, column)[0]; nComparisons = nComparisons + 1
+		distance = fastdtw(row, column)[0]; nComparisons = nComparisons + 1
 		distances.append([df['Path'][i],df['Path'][j],str(row),str(column),distance])
 
 # comparisons with only one case
