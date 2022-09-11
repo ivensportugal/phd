@@ -7,7 +7,7 @@ from scipy.spatial.distance import euclidean
 folder = '/Users/Ivens/Downloads/'
 
 # read file
-df = pd.read_csv(folder+'sizes'+sys.argv[-4]+'.csv')
+df = pd.read_csv(folder+'sizes'+sys.argv[0][-4]+'.csv')
 
 # define min and max
 nmin = sys.argv[1]
