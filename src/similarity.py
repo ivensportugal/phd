@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
@@ -9,8 +10,8 @@ folder = '/Users/Ivens/Downloads/'
 df = pd.read_csv(folder+'sizes.csv')
 
 # define min and max
-nmin = 0
-nmax = 6000
+nmin = sys.argv[1]
+nmax = sys.argv[2]
 
 # preprocess by transforming string to list of ints
 df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
@@ -48,22 +49,20 @@ for i in range(nmin,min(nmax,n)):
 d = pd.DataFrame(distances)
 d.columns = ['Path1','Path2','Size1','Size2','Distance']
 
-# print satisfying cases to the user
-# print(d[d['Distance']<10])
 
-d10 = d[d['Distance']<10]
-d15 = d[(d['Distance']>=10) & (d['Distance']<15)]
-d20 = d[(d['Distance']>=15) & (d['Distance']<20)]
+# d10 = d[d['Distance']<10]
+# d15 = d[(d['Distance']>=10) & (d['Distance']<15)]
+# d20 = d[(d['Distance']>=15) & (d['Distance']<20)]
 
 # print reports to the user
-print('Number of cases where distance < 10: ' + str(len(d10)))
-print('Number of cases where distance < 15: ' + str(len(d15)))
-print('Number of cases where distance < 20: ' + str(len(d20)))
+# print('Number of cases where distance < 10: ' + str(len(d10)))
+# print('Number of cases where distance < 15: ' + str(len(d15)))
+# print('Number of cases where distance < 20: ' + str(len(d20)))
 
 # export the result
-d10.to_csv(folder+'distances10.csv', index=None)
-d15.to_csv(folder+'distances15.csv', index=None)
-d20.to_csv(folder+'distances20.csv', index=None)
+# d10.to_csv(folder+'distances10.csv', index=None)
+# d15.to_csv(folder+'distances15.csv', index=None)
+# d20.to_csv(folder+'distances20.csv', index=None)
 
 # Case Study 3 Results
 print('')
