@@ -10,8 +10,8 @@ folder = '/Users/Ivens/Downloads/'
 df = pd.read_csv(folder+'sizes'+sys.argv[0][-4]+'.csv')
 
 # define min and max
-nmin = sys.argv[1]
-nmax = sys.argv[2]
+nmin = int(sys.argv[1])
+nmax = int(sys.argv[2])
 
 # preprocess by transforming string to list of ints
 df['Sizes'] = [[int(n) for n in x.strip('[]').split(',')] for x in df['Sizes']]
