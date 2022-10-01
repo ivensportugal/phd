@@ -65,7 +65,7 @@ d.columns = ['Path1','Path2','Size1','Size2','Distance']
 # d20.to_csv(folder+'distances20.csv', index=None)
 
 # Case Study 3 Results
-print('Case: ' + str(sys.argv[1] + '- ' + str(sys.argv[2])))
+print('Case: ' + str(sys.argv[1] + ' - ' + str(sys.argv[2])))
 print('')
 print('Number of cluster paths           : ' + str(n))
 print('Number of cluster path comparisons: ' + str(nComparisons))
